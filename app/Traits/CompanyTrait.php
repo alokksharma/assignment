@@ -42,7 +42,7 @@ trait CompanyTrait
         $user = Auth::user();
         if ($user->hasRole('Admin')) {
             // Get all invites where this user is the inviter
-            return User::where('company_id', $user->company_id)->paginate(10);
+            return User::where('company_id', $user->company_id)->where('id', '!=' , $user->id)->paginate(10);
         } elseif ($user->hasRole('SuperAdmin')) {
             // Get all invites where this user is invited
             return User::whereNotNull('company_id')->paginate(10);
@@ -57,7 +57,7 @@ trait CompanyTrait
     {
         $user = Auth::user();
         if ($user->hasRole('Admin')) {
-           $userCount = User::where('company_id', $user->company_id)->count();
+           $userCount = User::where('company_id', $user->company_id)->where('id', '!=' , $user->id)->count();
         } else {
             $userCount = User::where('name','!=', 'Super Admin')->count();
         }
