@@ -48,5 +48,21 @@ class ShortUrlController extends Controller
         return view('short_urls.index', compact('shortUrls'));
     }
 
+    //redirect to original url
+    public function redirectToOriginalUrl($code)
+    {
+       try {
+            $fullUrl = ShortUrl::where('short_code', $code)->first();
+            if ($fullUrl) {
+                return redirect($fullUrl->original_url);
+            } else {
+                return redirect('/')->with('error', 'Invalid Short URL');
+            }
+
+       } catch (\Throwable $th) {
+
+         return redirect('/')->with('error', 'Invalid Short URL');
+       }
+    }
 
 }
