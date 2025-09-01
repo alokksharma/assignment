@@ -30,6 +30,7 @@
                                             <tr>
                                                 <th>#</th>
                                                 <th>Short Code</th>
+                                                <th>Short Url</th>
                                                 <th>Original URL</th>
                                                 <th>Created By</th>
                                                 <th>Created At</th>
@@ -42,11 +43,12 @@
                                             @endphp
                                             <tr>
                                                 <th scope="row">{{ $key }}</th>
-                                                <td> <a href="{{ $shortUrl->original_url }}" target="_blank" class="underline">{{ $shortUrl->short_code }}</a></td>
-                                                <td>{{ $shortUrl->original_url }}</td>
+                                                {{-- <td> <a href="{{ $shortUrl->original_url }}" target="_blank" class="underline">{{ $shortUrl->short_code }}</a></td> --}}
+                                                <td> <a href="{{ route('short_urls.redirect', $shortUrl->short_code) }}" target="_blank" class="underline">{{ $shortUrl->short_code }}</a></td>
+                                                <td>{{ route('short_urls.redirect', $shortUrl->short_code) }}</td>
+                                                <td> {{ $shortUrl->original_url }} </td>
                                                 <td>{{ $shortUrl->user->name ?? 'N/A' }}</td>
                                                 <td>{{ $shortUrl->created_at->format('Y-m-d H:i') }}</td>
-
                                             </tr>
 
                                             @empty
@@ -73,5 +75,21 @@
                 </div>
             </div>
     @endsection
+    @push('scripts')
+    <script>
+        $('.copy_text').click(function (e) {
+            e.preventDefault();
+            var copyText = $(this).attr('href');
 
+            document.addEventListener('copy', function(e) {
+                e.clipboardData.setData('text/plain', copyText);
+                e.preventDefault();
+            }, true);
 
+            document.execCommand('copy');
+            alert('copied text: ' + copyText);
+        });
+
+    </script>
+
+    @endpush
