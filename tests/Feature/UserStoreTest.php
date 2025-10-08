@@ -23,7 +23,6 @@ class UserStoreTest extends TestCase
             'name' => 'User One'.uniqid(),
             'email' => $userEmail,
             'company_name' => 'New Company Inc',
-            'role' => 'Admin',
         ]);
 
         $response->assertRedirect(route('companies.invite-list'));
@@ -106,6 +105,23 @@ class UserStoreTest extends TestCase
         $response->assertSessionHasErrors(['name', 'email', 'role']);   
 
     }
+
+
+    public function member_can_not_invite_user()
+    {
+        $member = User::factory()->create();
+        $member->assignRole('Member');
+
+        $response = $this->actingAs($member)->post(route('companies.invite-admin.store'), [
+            'name' => 'member ' . uniqid(),
+            'email' => 'member' . uniqid() . '@example.com',
+            'role' => 'Member',
+        ]);
+
+        $response->assertStatus(403);
+    }
+
+    
 
 
 }
