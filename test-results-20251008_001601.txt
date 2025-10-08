@@ -1,0 +1,9 @@
+
+   PASS  Tests\Feature\ShortUrlTest
+  ✓ admin can create short url                                           0.05s  
+  ✓ member can create short url                                          0.01s  
+  ✓ short url redirects to original url                                  0.01s  
+
+  Tests:    3 passed (4 assertions)
+  Duration: 0.08s
+
