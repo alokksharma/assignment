@@ -5,11 +5,27 @@ namespace Tests\Feature;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use App\Providers\RouteServiceProvider;
 use Illuminate\Foundation\Testing\WithFaker;
+use Spatie\Permission\Models\Role;
 use App\Models\User;
 use Tests\TestCase;
 
 class UserTest extends TestCase
 {
+
+    use RefreshDatabase;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        //migrate the database
+        $this->artisan('migrate:fresh');
+        // Seed roles and permissions
+        $this->seed(\Database\Seeders\RolePermissionSeeder::class);
+
+        // Recreate roles and permissions
+    }
+
+
     /**
      * A basic feature test example.
      */
