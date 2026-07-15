@@ -8,13 +8,29 @@
 	<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Nunito:200,200i,300,300i,400,400i,600,600i,700,700i,800,800i,900,900i">
 	<link rel="stylesheet" href="{{ asset('assets/css/ready.css') }}">
 	<link rel="stylesheet" href="{{ asset('assets/css/demo.css') }}">
+    <style>
+        #targetSpec table {
+            width: 100% !important;
+            border-collapse: collapse;
+        }
+
+        #targetSpec table td,
+        #targetSpec table th {
+            border: 1px solid #ddd;
+            padding: 8px;
+        }
+
+        #targetSpec table tr:nth-child(even) {
+            background-color: #f8f9fa;
+        }
+    </style>
 </head>
 <body>
 	<div class="wrapper">
 		<div class="main-header">
 			<div class="logo-header">
 				<a href="#" class="logo">
-					Url Shorter
+					Project Survey
 				</a>
 				<button class="navbar-toggler sidenav-toggler ml-auto" type="button" data-toggle="collapse" data-target="collapse" aria-controls="sidebar" aria-expanded="false" aria-label="Toggle navigation">
 					<span class="navbar-toggler-icon"></span>
@@ -54,7 +70,7 @@
 									<div class="user-box">
 										<div class="u-img"><img src="{{ asset('assets/img/profile.jpg') }}" alt="user"></div>
 										<div class="u-text">
-											<h4>Url Shorter</h4>
+											<h4>Project Survey</h4>
 										</div>
 									</li>
                                     <form method="POST" action="{{ route('logout') }}">
@@ -105,15 +121,14 @@
             <div class="modal-dialog modal-dialog-centered" role="document">
                 <div class="modal-content">
                     <div class="modal-header bg-primary">
-                        <h6 class="modal-title"><i class="la la-frown-o"></i> Under Development</h6>
+                        <h6 class="modal-title"><i class="la la-frown-o"></i> Survey Details</h6>
                         <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                             <span aria-hidden="true">&times;</span>
                         </button>
                     </div>
                     <div class="modal-body text-center">
-                        <p>Currently the pro version of the <b>Ready Dashboard</b> Bootstrap is in progress development</p>
-                        <p>
-                        <b>We'll let you know when it's done</b></p>
+                        <h5 id="projectName"></h5>
+                        <div id="targetSpec"></div>
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>

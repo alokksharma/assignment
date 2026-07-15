@@ -10,7 +10,7 @@
 										<div class="card-title">User</div>
 									</div>
 
-                                    <form method="POST" id="validateSubmitForm" action="{{ route('companies.invite-admin.store', $company) }}">
+                                    <form method="POST" id="validateSubmitForm" action="{{ route('companies.invite-admin.store') }}">
                                             @csrf
                                         <div class="card-body">
                                             <div class="form-group">
@@ -27,16 +27,21 @@
                                                     <span class="text-danger">{{ $message }}</span>
                                                 @enderror
                                             </div>
-                                            @if (auth()->user()->hasRole('SuperAdmin'))
-                                                <div class="form-group">
-                                                    <label for="company_name">Company Name <span>*</span></label>
-                                                    <input type="text" name="company_name" class="form-control" id="company_name" placeholder="Enter Company Name" value="{{ old('company_name') }}">
-                                                    @error('company_name')
-                                                        <span class="text-danger">{{ $message }}</span>
-                                                    @enderror
-                                                </div>
-                                            @endif
-                                            @if (auth()->user()->hasRole('Admin'))
+                                            <div class="form-group">
+                                                <label for="address"> Address </label>
+                                                <input type="text" name="address" class="form-control" id="address" placeholder="Enter Address" value="{{ old('address') }}">
+                                                @error('address')
+                                                    <span class="text-danger">{{ $message }}</span>
+                                                @enderror
+                                            </div>
+
+                                            <div class="form-group">
+                                                <label for="contact"> Contact </label>
+                                                <input type="text" name="contact" class="form-control" id="contact" placeholder="Enter Contact" value="{{ old('contact') }}">
+                                                @error('contact')
+                                                    <span class="text-danger">{{ $message }}</span>
+                                                @enderror
+                                            </div>
                                             <div class="form-group">
                                                 <label for="role">Role <span>*</span></label>
                                                 <select name="role" id="role" class="form-control">
@@ -48,7 +53,6 @@
                                                     <span class="text-danger">{{ $message }}</span>
                                                 @enderror
                                             </div>
-                                            @endif
                                             {{-- <div class="form-group">
                                                 <label for="password">Password</label>
                                                 <input type="password" class="form-control" id="password" placeholder="Password">
@@ -67,7 +71,6 @@
 							</div>
 						</div>
 				</div>
-
 
 			</div>
 		</div>
@@ -106,10 +109,10 @@
                 required: true,
                 customEmail: true
             },
-            company_name: {
-                required: true,
+            contact: {
+                required: false,
                 minlength: 2,
-                maxlength: 50,
+                maxlength: 20,
             },
             role: {
                 required: true,

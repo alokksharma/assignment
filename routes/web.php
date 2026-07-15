@@ -3,6 +3,11 @@
 use App\Http\Controllers\InviteAdminController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ShortUrlController;
+use App\Http\Controllers\CountriesController;
+use App\Http\Controllers\QuestionsController;
+use App\Http\Controllers\LanguageController;
+use App\Http\Controllers\SurveController;
+use App\Http\Controllers\VendorController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -15,9 +20,35 @@ use Illuminate\Support\Facades\Route;
 | be assigned to the "web" middleware group. Make something great!
 |
 */
+Route::get('/setup', function () {
+ Artisan::call('migrate', [
+        '--force' => true,
+    ]);
+
+    Artisan::call('db:seed', [
+        '--class' => Database\Seeders\RolePermissionSeeder::class,
+        '--force' => true,
+    ]);
+    Artisan::call('db:seed', [
+        '--class' => Database\Seeders\ProjectSeeder::class,
+        '--force' => true,
+    ]);
+
+    return response()->json([
+        'status' => true,
+        'message' => 'Migration and RolePermissionSeeder completed successfully.',
+    ]);
+});
+
+Route::get('/refresh-migrate', function (){
+    Artisan::call('migrate:refresh', [
+        '--seed' => true,
+        '--force' => true,
+    ]);
+});
 
 Route::get('/', function () {
-    return view('welcome');
+    return view('auth.login');
 });
 Route::get('url/{code}', [ShortUrlController::class, 'redirectToOriginalUrl'])->name('short_urls.redirect');
 Route::get('/dashboard', [ProfileController::class, 'dashboard'])->middleware(['auth', 'verified'])->name('dashboard');
@@ -27,10 +58,23 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
 
-Route::middleware(['auth', 'role:SuperAdmin|Admin'])->group(function () {
+Route::middleware(['auth', 'role:SuperAdmin|Admin|Vendor'])->group(function () {
+    Route::get('/languages', [LanguageController::class, 'index'])->name('languages');
+    Route::get('/questions', [QuestionsController::class, 'index'])->name('questions');
+    Route::get('/countries', [CountriesController::class, 'index'])->name('countries');
+    Route::get('/surveys', [SurveController::class, 'index'])->name('surveys');
+    Route::get('/survey-projects', [SurveController::class, 'projects'])->name('survey.project');
+    Route::get('/sync-languages', [LanguageController::class, 'syncLanguages'])->name('languages.sync');
+    Route::get('/sync-countries', [CountriesController::class, 'syncCountries'])->name('countries.sync');
+    Route::get('/sync-questions', [QuestionsController::class, 'syncQuestions'])->name('questions.sync');
+    Route::get('/sync-surveys', [SurveController::class, 'syncSurve'])->name('surveys.sync');
+
+    Route::get('/invite-admin/{id}/edit', [InviteAdminController::class, 'edit'])->name('companies.invite-admin.edit');
+    Route::put('/invite-admin/{id}', [InviteAdminController::class, 'update'])->name('companies.invite-admin.update');
     Route::get('companies/invite-admin', [InviteAdminController::class, 'create'])->name('companies.invite-admin');
     Route::post('companies/invite-admin', [InviteAdminController::class, 'store'])->name('companies.invite-admin.store');
     Route::get('invite-list', [InviteAdminController::class, 'index'])->name('companies.invite-list');
+    Route::resource('vendors', VendorController::class)->only(['index', 'create', 'store']);
 });
 
 Route::middleware(['auth', 'role:SuperAdmin|Admin|Member'])->group(function () {

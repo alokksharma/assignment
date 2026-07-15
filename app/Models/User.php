@@ -60,5 +60,10 @@ class User extends Authenticatable
         return $this->hasMany(ShortUrl::class);
     }
 
+    public function vendor()
+    {
+        return $this->hasOne(Vendor::class, 'user_id');
+    }
+
 
 }

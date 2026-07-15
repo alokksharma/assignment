@@ -6,6 +6,11 @@
         <div class="row">
             <div class="col-md-12">
                 <div class="card">
+                    @if (session('success'))
+                        <div class="alert alert-success">
+                            {{ session('success') }}
+                        </div>
+                    @endif
                     <div class="card-header">
                         <div class="card-title d-flex justify-content-between align-items-center">
                             <span>User List</span>
@@ -14,12 +19,6 @@
 
                             </div>
                         </div>
-
-                            @if (session('success'))
-                            <div class="alert alert-success">
-                                {{ session('success') }}
-                            </div>
-                        @endif
                     </div>
 
                     <div class="table-responsive">
@@ -30,6 +29,7 @@
                                     <th>Name</th>
                                     <th>Email</th>
                                     <th>Roles</th>
+                                    <th>Action</th>
 
                                 </tr>
                             </thead>
@@ -46,7 +46,7 @@
                                     <td>{{ $user->name }}</td>
                                     <td>{{ $user->email }}</td>
                                     <td>{{ $user->roles->pluck('name')->join(', ') }}</td>
-
+                                    <td><a href="{{route('companies.invite-admin.edit', $user->id)}}" class="btn btn-sm btn-warning">Edit</a></td>
                                 </tr>
                                 @empty
                                     <tr>
@@ -63,8 +63,6 @@
                                         </td>
                                     </tr>
                                     @endif
-
-
                             </tbody>
                         </table>
                     </div>

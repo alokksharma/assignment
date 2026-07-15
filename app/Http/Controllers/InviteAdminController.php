@@ -23,71 +23,73 @@ class InviteAdminController extends Controller
         // Allow inviting Admin or Member
         $roles = [
             'Admin' => 'Admin',
-            'Member' => 'Member',
+            'Member' => 'Employee',
         ];
-        $company = Auth::user()->company; // Get the current user's company
-        return view('companies.invite-admin', compact('company', 'roles'));
+        return view('companies.invite-admin', compact('roles'));
     }
 
     public function store(Request $request)
     {
-        if(Auth::user()->hasRole('SuperAdmin')) {
-                $request->validate([
-                    'name' => 'required|string|max:255',
-                    'email' => 'required|email|unique:users,email',
-                    'company_name' => 'required|string|max:255',
-                ]);
-        }else{
-             $request->validate([
-                'name' => 'required|string|max:255',
-                'email' => 'required|email|unique:users,email',
-                'role' => 'required|in:Admin,Member',
-            ]);
-        }
-       // dd($request->all());
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|unique:users,email',
+            'role' => 'required|in:Admin,Member',
+        ]);
         //Create Company if role is Superadmin
-        if(Auth::user()->hasRole('SuperAdmin')) {
-            $company = $request->company_name;
-            $newCompany = \App\Models\Company::create(['name' => $company]);
-            $companyId = $newCompany->id;
-        } else {
-            $companyId = Auth::user()->company_id; // Use the current user's company_id
-        }
 
         $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
-            'company_id' => $companyId,
+            'address' => $request->address,
+            'contact' => $request->contact,
             'password' => Hash::make('12345678'),
 
         ]);
-        if(Auth::user()->hasRole('SuperAdmin')) {
-            $user->assignRole('Admin'); // Default role for SuperAdmin inviting
-            $role = 'Admin';
-        } else {
-            $user->assignRole($request->role); // Assign the role based on the request
-             $role = $request->role;
-        }
-     //   $user->assignRole($request->role);
-        // Store invite record
-        //update query using Invite models
-      //  if(Auth::user()->roles == 'Admin' ) {
-             Invite::create([
-                    'user_id' => $user->id,
-                    'invite_id' => Auth::user()->id,
-                ]);
-      //  }
+        $user->assignRole($request->role); // Assign the role based on the request
+        $role = $request->role;
 
         return redirect()->route('companies.invite-list')->with('success', $request->role . ' created successfully!');
     }
 
+    public function edit($id)
+    {
+        $user = User::findOrFail($id);
+        $roles = [
+            'Admin' => 'Admin',
+            'Member' => 'Employee',
+        ];
+        return view('companies.edit', compact('user', 'roles'));
+    }
+
+
+    public function update(Request $request, $id)
+    {
+        $user = User::findOrFail($id);
+
+        $request->validate([
+            'name' => 'required|string|max:30',
+            'email' => 'required|email|unique:users,email,' . $user->id,
+            'address' => 'nullable|string|max:255',
+            'contact' => 'nullable|string|max:20',
+            'role' => 'required',
+        ]);
+
+        $user->update([
+            'name' => $request->name,
+            'email' => $request->email,
+            'address' => $request->address,
+            'contact' => $request->contact,
+            'role' => $request->role,
+        ]);
+
+        return redirect()
+            ->route('companies.invite-list')
+            ->with('success', 'User updated successfully.');
+    }
+
     public function index()
     {
-        // Show a list of invited users for the current user's company
-        $company = Auth::user()->company;
-       // dd(Auth::user()->id); // Debugging line to check the company data
-           $users = $this->inviteList();
-             //   dd($users); // Debugging line to check the users data
-        return view('companies.invite-list', compact('company', 'users'));
+        $users = User::role(['Member', 'Admin'])->paginate(10);
+        return view('companies.invite-list', compact('users'));
     }
 }
