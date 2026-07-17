@@ -8,7 +8,7 @@
                 <div class="card">
                     <div class="card-header">
                         <div class="d-flex justify-content-between align-items-center flex-wrap">
-                            <h5 class="mb-0">Survey List</h5>
+                            <h5 class="mb-0">Client Survey List</h5>
                             <form id="searchForm"  action="{{ route('surveys') }}" method="GET" class="d-flex">
                                 <input type="text" name="q" class="form-control me-2" placeholder="Search survey..." value="{{ request('q') }}">
                                 @if(request('q'))
@@ -80,7 +80,7 @@
                                     <td>{{ $survey->facial_coding }}</td>
                                     <td>{{ $survey->project_ir }}</td>
                                     <td>{{ $survey->project_loi }}</td>
-                                    <td>{{ $survey->cpi }}</td>
+                                    <td>${{ $survey->cpi }}</td>
                                     <td>{{ $survey->quota }}</td>
                                     <td>{{ $survey->live_click_quota }}</td>
                                     <td>{{ $survey->test_click_quota }}</td>

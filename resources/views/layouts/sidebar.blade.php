@@ -66,10 +66,17 @@
                     {{-- <span class="badge badge-count">8</span> --}}
                 </a>
             </li>
-            <li class="nav-item @if (request()->routeIs('surveys')) active @endif">
+            <li class="nav-item @if (request()->routeIs('survey.project')) active @endif">
                 <a href="{{ route('survey.project') }}">
-                    <i class="la la-search"></i>
+                    <i class="la la-list"></i>
                     <p>Surveys Projects</p>
+                    {{-- <span class="badge badge-count">8</span> --}}
+                </a>
+            </li>
+            <li class="nav-item @if (request()->routeIs('vendor.project.assign.list')) active @endif">
+                <a href="{{ route('vendor.project.assign.list') }}">
+                    <i class="la la-list"></i>
+                    <p>Vendor Projects Assignment</p>
                     {{-- <span class="badge badge-count">8</span> --}}
                 </a>
             </li>
@@ -77,13 +84,13 @@
             {{-- logout button --}}
 
             <form method="POST" action="{{ route('logout') }}">
-            @csrf
-            <li class="nav-item update-pro">
-                <button type="submit">
-                    <i class="la la-hand-pointer-o"></i>
-                    <p>Logout</p>
-                </button>
-            </li>
+                @csrf
+                <li class="nav-item update-pro mb-4">
+                    <button type="submit">
+                        <i class="la la-hand-pointer-o"></i>
+                        <p>Logout</p>
+                    </button>
+                </li>
             </form>
             {{-- end logout button --}}
 

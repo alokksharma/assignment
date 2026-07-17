@@ -8,7 +8,7 @@
                 <div class="card">
                     <div class="card-header">
                         <div class="d-flex justify-content-between align-items-center flex-wrap">
-                            <h5 class="mb-0">Survey List</h5>
+                            <h5 class="mb-0">3AS Survey List</h5>
                             <form id="searchForm"  action="{{ route('surveys') }}" method="GET" class="d-flex">
                                 <input type="text" name="q" class="form-control me-2" placeholder="Search survey..." value="{{ request('q') }}">
                                 @if(request('q'))
@@ -29,32 +29,36 @@
                             <thead>
                                 <tr>
                                     <th>#</th>
-                                    <th>ID</th>
-                                    <th>Project Id</th>
-                                    <th>Project name</th>
-                                    <th>Project Code</th>
-                                    <th>Country</th>
-                                    <th>Language</th>
-                                    <th>Category</th>
-                                    <th>Currency</th>
+                                    <th>3AS Project ID</th>
+                                    <th>Client Project ID</th>
+                                    <th>Client Project name</th>
+                                    <th>Client Project Code</th>
+                                    <th>Survey Country</th>
+                                    <th>Survey Language</th>
+                                    <th>Survey Category</th>
+                                    <th>Survay Currency</th>
                                     <th>Audience Type</th>
-                                    <th>Pii Collection</th>
+                                    <th>PII Collection</th>
                                     <th>Application Download</th>
                                     <th>Facial Coding</th>
-                                    <th>Project Ir</th>
-                                    <th>Project loi</th>
-                                    <th>CPI</th>
-                                    <th>Quota</th>
-                                    <th>Live Click Quota</th>
-                                    <th>Test Click Quota</th>
-                                    <th>Project Start Date</th>
-                                    <th>Project End Date</th>
-                                    <th>Live Url</th>
-                                    <th>Test Url</th>
-                                    <th>Status</th>
+                                    <th>Survey IR</th>
+                                    <th>Survey LOI</th>
+                                    <th>Survey CPI</th>
+                                    <th>Survey Quota</th>
+                                    <th>Client Live Click Quota</th>
+                                    <th>Client Test Click Quota</th>
+                                    <th>Survey Start Date</th>
+                                    <th>Survey End Date</th>
+                                    <th>Client Live URL</th>
+                                    <th>Client Test URL</th>
+                                    <th>3AS Live URL</th>
+                                    <th>3AS Test URL </th>
+									<th>3AS Redirects </th>
+                                    <th>Survey Status</th>
                                     <th>Device Type</th>
-                                    <th>Qualification</th>
-                                    <th>Target Spec</th>
+                                    <th>Survey Qualification</th>
+                                    <th>Survey Target Spec</th>
+                                    <th>Action</th>
 
                                 </tr>
                             </thead>
@@ -68,8 +72,7 @@
                                     @endphp
                                 <tr>
                                     <th scope="row">{{ $i }}</th>
-                                    <td>{{$project?->name .'-'. $project?->created_at->format('mY') . '-' . str_pad($survey->id, 4, '0', STR_PAD_LEFT)}}</td>
-                                    <td>{{ $project?->name . str_pad($loop->iteration, 4, '0', STR_PAD_LEFT) }}</td>
+                                    <td>{{ $survey->survey_code }}</td>
                                     <td>{{ $survey->project_id }}</td>
                                     <td>{{ $survey->project_name }}</td>
                                     <td>{{ $survey->project_code }}</td>
@@ -83,7 +86,7 @@
                                     <td>{{ $survey->facial_coding }}</td>
                                     <td>{{ $survey->project_ir }}</td>
                                     <td>{{ $survey->project_loi }}</td>
-                                    <td>{{ $survey->cpi }}</td>
+                                    <td>$ {{ $survey->cpi*0.8 }}</td>
                                     <td>{{ $survey->quota }}</td>
                                     <td>{{ $survey->live_click_quota }}</td>
                                     <td>{{ $survey->test_click_quota }}</td>
@@ -91,6 +94,16 @@
                                     <td>{{ $survey->project_end_date }}</td>
                                     <td>{{ $survey->live_url }}</td>
                                     <td>{{ $survey->test_url }}</td>
+                                    <td>{{ config('app.url') }}/s2c?3ASPID={{$survey->survey_code }}&country={{$survey->country?->name }}&ccode=[encrypted12digit]&link=test</td>
+                                    <td>{{ config('app.url') }}/s2c?3ASPID={{$survey->survey_code }}&country={{$survey->country?->name }}&ccode=[encrypted12digit]&link=live&phash=[newhash]</td>
+									<td>
+										<ul>
+											<li>Complete:-  {{ config('app.url') }}/c2s?ccode=[encrypted12digit]&status=1</li>
+											<li>Terminate:- {{ config('app.url') }}/c2s?ccode=[encrypted12digit]&status=2</li>
+										    <li>Quotafull:- {{ config('app.url') }}/c2s?ccode=[encrypted12digit]&status=3</li>
+								            <li>Quality:-   {{ config('app.url') }}/c2s?ccode=[encrypted12digit]&status=4</li>
+										</ul>
+									</td>
                                     <td>{{ $survey->status }}</td>
                                     <td>{{ $survey->device_type }}</td>
                                     <td>{{ $survey->questions->pluck('question')->implode(', ') }}</td>
@@ -109,6 +122,7 @@
                                             Show details</p>
                                         </button>
                                     </th>
+                                    <th><a href="{{ route('vendor.project.assign', $survey->id)}}" class="btn btn-sm btn-warning"><i class="la la-plus"></i></a></th>
                                 </tr>
                                 @empty
                                     <tr>

@@ -32,7 +32,7 @@ class VendorController extends Controller
             'terminate' => 'nullable|string|max:255',
             'quotafull' => 'nullable|string|max:255',
             'speedster' => 'nullable|string|max:255',
-            'vendor_id' => 'required|digits:6|unique:vendors,vendor_id',
+           // 'vendor_id' => 'required|digits:6|unique:vendors,vendor_id',
         ]);
 
         DB::transaction(function () use ($request) {
@@ -57,12 +57,11 @@ class VendorController extends Controller
                 'quotafull' => $request->quotafull,
                 'speedster' => $request->speedster,
                 'expired_at' => $request->expired_at,
-                'vendor_id' => $request->vendor_id,
             ]);
 
-            // $vendor->update([
-            //     'vendor_id' => '3AS-API-' . now()->format('mY') . '-' . str_pad($vendor->id, 4, '0', STR_PAD_LEFT),
-            // ]);
+            $vendor->update([
+                'vendor_id' =>  now()->format('mY') . '-' . str_pad($vendor->id, 3, '0', STR_PAD_LEFT),
+            ]);
         });
 
         return redirect()->route('vendors.index')->with('success', 'Vendor created successfully!');

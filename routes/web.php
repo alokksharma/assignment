@@ -40,6 +40,15 @@ Route::get('/setup', function () {
     ]);
 });
 
+Route::get('/migrate-rollback', function () {
+    Artisan::call('migrate:rollback');
+
+    return response()->json([
+        'status' => true,
+        'message' => 'Migration completed successfully.',
+    ]);
+});
+
 Route::get('/refresh-migrate', function (){
     Artisan::call('migrate:refresh', [
         '--seed' => true,
@@ -64,6 +73,10 @@ Route::middleware(['auth', 'role:SuperAdmin|Admin|Vendor'])->group(function () {
     Route::get('/countries', [CountriesController::class, 'index'])->name('countries');
     Route::get('/surveys', [SurveController::class, 'index'])->name('surveys');
     Route::get('/survey-projects', [SurveController::class, 'projects'])->name('survey.project');
+    Route::get('/survey-projects-assign/{id}/create', [SurveController::class, 'vendorProjectAssign'])->name('vendor.project.assign');
+    Route::get('/survey-projects-assign/list', [SurveController::class, 'vendorProjectAssignList'])->name('vendor.project.assign.list');
+    Route::get('/vendors/search', [SurveController::class, 'searchVendors'])->name('vendors.search');
+    Route::post('/survey-projects-assign/store/{id}', [SurveController::class, 'vendorProjectAssignStore'])->name('vendors-project-assign.store');
     Route::get('/sync-languages', [LanguageController::class, 'syncLanguages'])->name('languages.sync');
     Route::get('/sync-countries', [CountriesController::class, 'syncCountries'])->name('countries.sync');
     Route::get('/sync-questions', [QuestionsController::class, 'syncQuestions'])->name('questions.sync');

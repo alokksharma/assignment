@@ -7,7 +7,10 @@ use Illuminate\Support\Facades\Http;
 use App\Models\Survey;
 use App\Models\SurveyQuestion;
 use App\Models\Project;
+use App\Models\vendor;
 use App\Models\SurveyQuestionOption;
+use App\Models\VendorProjectAssign;
+use Illuminate\Validation\Rule;
 use DB;
 
 class SurveController extends Controller
@@ -38,7 +41,7 @@ class SurveController extends Controller
             'language:id,name',
         ])
         ->paginate(20);
-        $project = Project::where('name', 'AS_API')->first();
+        $project = Project::where('name', '3AS_API')->first();
         return view('masters.survey_project', compact('surveys','project'));
     }
 
@@ -157,5 +160,79 @@ class SurveController extends Controller
             'message' => 'Survey synced successfully.',
             'data'    => Survey::all(),
         ]);
+    }
+
+    public function vendorProjectAssign($id)
+    {
+        // $assignedVendorIds = VendorProjectAssign::where('survey_id', $id)->pluck('vendor_id');
+        // $vendors = Vendor::query()->whereNotIn('id', $assignedVendorIds)->take(10)->get();
+         return view('masters.vendor-project-assign', compact('id'));
+    }
+
+    public function searchVendors(Request $request)
+    {
+        $surveyId = $request->survey_id;
+
+        $assignedVendorIds = VendorProjectAssign::where('survey_id', $surveyId)
+            ->pluck('vendor_id');
+
+        $vendors = Vendor::query()
+            ->whereNotIn('id', $assignedVendorIds)
+            //->where('status', 1)
+            ->when($request->search, function ($query) use ($request) {
+                $query->where('vendor_id', 'like', '%' . $request->search . '%');
+            })
+           // ->orderBy('vendor_id', 'asc')
+            ->paginate(10);
+
+        return response()->json([
+            'results' => $vendors->map(function ($vendor) {
+                return [
+                    'id'   => $vendor->id,
+                    'text' => $vendor->vendor_id,
+                ];
+            }),
+
+            'pagination' => [
+                'more' => $vendors->hasMorePages()
+            ]
+        ]);
+    }
+
+    public function vendorProjectAssignList()
+    {
+        $vendor_projects = VendorProjectAssign::query()->with(['vendor.user','survey'])->paginate(10);
+         return view('masters.vendor-project-assign-list', compact('vendor_projects'));
+
+    }
+
+    public function vendorProjectAssignStore(Request $request, $id)
+    {
+            $data = $request->validate([
+                    'vendor_id' => [
+                        'required',
+                        'exists:vendors,id',
+                        Rule::unique('vendor_project_assigns')
+                            ->where(function ($query) use ($id) {
+                                return $query->where('survey_id', $id);
+                            }),
+                    ],
+                    'temp_complete' => ['required','string', 'max:255'],
+                    'temp_terminate' => ['required','string', 'max:255'],
+                    'temp_quotafull' => ['required','string', 'max:255'],
+                    'temp_speedster' => ['required','string', 'max:255'],
+                    'temp_cpi' => [
+                                'required',
+                                'numeric',
+                                'decimal:0,2',
+                                'max:9999.99',
+                            ],
+                ]);
+           $vendor = Vendor::query()->findorfail($request->vendor_id);
+            $data['survey_id'] = $id;
+            $data['project_vendor_id'] =  $vendor->vendor_id.'_'.$id;
+            VendorProjectAssign::create($data);
+
+        return redirect()->route('vendor.project.assign.list')->with('success', 'Project assigned successfully.');
     }
 }

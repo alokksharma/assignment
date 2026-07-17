@@ -58,4 +58,13 @@ class Survey extends Model
             });
         });
     }
+
+    protected function getSurveyCodeAttribute()
+    {
+
+        return '3AS_API' . '-' .
+            optional($this->created_at)->format('mY') . '-' .
+            str_pad($this->id, 4, '0', STR_PAD_LEFT);
+
+    }
 }

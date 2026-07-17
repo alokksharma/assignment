@@ -14,16 +14,15 @@ class ProjectSeeder extends Seeder
     public function run(): void
     {
        $projects = [
-            'AS_API' => 'Alok Project',
+            '3AS_API' => 'Alok Project',
         ];
 
         foreach ($projects as $name => $description) {
-            Project::firstOrCreate(
+            Project::updateOrCreate(
                 ['name' => $name],
                 [
                     'description' => $description,
                     'status' => 1,
-                    'created_at' => now(),
                 ]
             );
         }

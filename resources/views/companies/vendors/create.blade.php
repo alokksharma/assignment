@@ -98,7 +98,7 @@
                                                     @enderror
                                                 </div>
                                             </div>
-                                            <div class="col-md-6">
+                                            {{-- <div class="col-md-6">
                                                 <div class="form-group">
                                                     <label for="vendor_id">Vendor ID <span>*</span></label>
                                                     <input type="text" name="vendor_id" class="form-control" id="vendor_id" placeholder="Enter Vendor Speedster" value="{{ old('vendor_id') }}">
@@ -107,10 +107,10 @@
                                                         <span class="text-danger">{{ $message }}</span>
                                                     @enderror
                                                 </div>
-                                            </div>
+                                            </div> --}}
                                             <div class="col-md-6">
                                                 <div class="form-group">
-                                                    <label for="expired_at">Expired At</label>
+                                                    <label for="expired_at">Expired At <span>*</span></label>
                                                     <input type="date" name="expired_at" class="form-control" id="expired_at" placeholder="Enter Vendor Expired Date" value="{{ old('speedster') }}">
                                                     @error('expired_at')
                                                         <span class="text-danger">{{ $message }}</span>
@@ -143,6 +143,10 @@
         return this.optional(element) || /^[a-zA-Z\s]+$/.test(value);
     }, "Please enter only letters.");
 
+    $.validator.addMethod("alphaNumeric", function(value, element) {
+        return this.optional(element) || /^[a-zA-Z0-9\s]+$/.test(value);
+    }, "Please enter only letters, numbers, and spaces.");
+
     $.validator.addMethod("customEmail", function(value, element) {
         // Custom regex for email validation
         return this.optional(element) || /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(value);
@@ -164,14 +168,20 @@
                 required: true,
                 customEmail: true
             },
+            expired_at: {
+                required: true,
+                date: true
+            },
             contact: {
                 required: false,
                 minlength: 8,
                 maxlength: 16,
             },
-            vendor_id: {
-                required: true,
-            },
+            // vendor_id: {
+            //     required: true,
+            //     alphaNumeric: true,
+            //     rangelength: [6, 6]
+            // },
             currency: {
                 required: true,
             },
