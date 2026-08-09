@@ -30,7 +30,7 @@
 
                                             <div class="col-md-6">
                                                 <div class="form-group">
-                                                    <label for="temp_complete">Vendor Temp Complete Redirect <span>*</span></label>
+                                                    <label for="temp_complete">Vendor Temp Complete Redirect</label>
                                                     <input type="text" name="temp_complete" class="form-control" id="temp_complete" placeholder="Enter Vendor Temp Complete Redirecct" value="{{ old('temp_complete') }}">
                                                     @error('temp_complete')
                                                         <span class="text-danger">{{ $message }}</span>
@@ -39,7 +39,7 @@
                                             </div>
                                             <div class="col-md-6">
                                                 <div class="form-group">
-                                                    <label for="temp_terminate">Vendor Temp Terminate Redirect <span>*</span></label>
+                                                    <label for="temp_terminate">Vendor Temp Terminate Redirect</label>
                                                     <input type="text" name="temp_terminate" class="form-control" id="temp_terminate" placeholder="Enter Vendor Temp Terminate Redirect" value="{{ old('temp_terminate') }}">
                                                     @error('temp_terminate')
                                                         <span class="text-danger">{{ $message }}</span>
@@ -48,7 +48,7 @@
                                             </div>
                                             <div class="col-md-6">
                                                 <div class="form-group">
-                                                    <label for="temp_quotafull">Vendor Temp Quotafull  <span>*</span></label>
+                                                    <label for="temp_quotafull">Vendor Temp Quotafull </label>
                                                     <input type="text" name="temp_quotafull" class="form-control" id="temp_quotafull" placeholder="Enter Vendor Temp Quotafull" value="{{ old('temp_quotafull') }}">
                                                     @error('temp_quotafull')
                                                         <span class="text-danger">{{ $message }}</span>
@@ -57,7 +57,7 @@
                                             </div>
                                             <div class="col-md-6">
                                                 <div class="form-group">
-                                                    <label for="temp_speedster">Vendor Temp Quality  <span>*</span></label>
+                                                    <label for="temp_speedster">Vendor Temp Quality </label>
                                                     <input type="text" name="temp_speedster" class="form-control" id="temp_speedster" placeholder="Enter Vendor Temp Speedster" value="{{ old('temp_speedster') }}">
                                                     @error('temp_speedster')
                                                         <span class="text-danger">{{ $message }}</span>
@@ -66,7 +66,7 @@
                                             </div>
                                             <div class="col-md-6">
                                                 <div class="form-group">
-                                                    <label for="temp_cpi">Vendor Temp CPI  <span>*</span></label>
+                                                    <label for="temp_cpi">Vendor Temp CPI </label>
                                                     <input type="text" name="temp_cpi" class="form-control" id="temp_cpi" placeholder="Enter Vendor Temp CPI" value="{{ old('temp_cpi') }}">
                                                     @error('temp_cpi')
                                                         <span class="text-danger">{{ $message }}</span>
@@ -77,7 +77,8 @@
                                     </div>
                                     <div class="card-action">
                                         <button class="btn btn-success">Submit</button>
-                                        <a href="{{ route('companies.invite-list') }}" class="btn btn-danger">Cancel</a>
+                                        <a href="{{ route('vendor.project.report') }}" class="btn btn-danger">Cancel</a>
+
                                     </div>
 
                                 </form>
@@ -146,22 +147,22 @@
             vendor_id: {
                 required: true,
             },
-            temp_complete: {
-                required: true,
-                maxlength: 255,
-            },
-            temp_terminate: {
-                required: true,
-                maxlength: 255,
-            },
-            temp_quotafull: {
-                required: true,
-                maxlength: 255,
-            },
-            temp_speedster: {
-                required: true,
-                maxlength: 255,
-            },
+            // temp_complete: {
+            //     required: true,
+            //     maxlength: 255,
+            // },
+            // temp_terminate: {
+            //     required: true,
+            //     maxlength: 255,
+            // },
+            // temp_quotafull: {
+            //     required: true,
+            //     maxlength: 255,
+            // },
+            // temp_speedster: {
+            //     required: true,
+            //     maxlength: 255,
+            // },
             temp_cpi: {
                 required: true,
                 decimalNumber:true,
@@ -171,23 +172,23 @@
 
         },
         messages: {
-            temp_complete: {
-                required: "This field is required",
-                maxlength: "Complete must be less than 255 characters"
-            },
+            // temp_complete: {
+            //     required: "This field is required",
+            //     maxlength: "Complete must be less than 255 characters"
+            // },
             vendor_id: {
                 required: "This field is required",
             },
-            temp_terminate: {
-                required: "This field is required",
-                maxlength: "Terminate must be less than 255 characters"
-            },
-            temp_quotafull: {
-                required: "This field is required",
-            },
-            temp_speedster: {
-                required: "This field is required",
-            },
+            // temp_terminate: {
+            //     required: "This field is required",
+            //     maxlength: "Terminate must be less than 255 characters"
+            // },
+            // temp_quotafull: {
+            //     required: "This field is required",
+            // },
+            // temp_speedster: {
+            //     required: "This field is required",
+            // },
             temp_cpi: {
                 required: "This field is required",
             },

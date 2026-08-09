@@ -8,4 +8,6 @@ return [
 
     'supplier_id' => env('SUPPLIER_ID', '85a1b0d2ef97cba2b2cf6959730e743c'),
 
+    'ip_source' => env('IP_SOURCE', 'ipify'),
+
 ];

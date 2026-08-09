@@ -14,31 +14,50 @@ class RolePermissionSeeder extends Seeder
         // Create roles
         $superAdmin = Role::firstOrCreate(['name' => 'SuperAdmin']);
         $admin = Role::firstOrCreate(['name' => 'Admin']);
-        $member = Role::firstOrCreate(['name' => 'Member']);
-        $vendor = Role::firstOrCreate(['name' => 'Vendor']);
+        $tenant = Role::firstOrCreate(['name' => 'Tenant']);
 
         // Example permissions (add more as needed)
         $permissions = [
-            'generate api',
-            'invite admin',
-            'invite member',
-            'invite vendor',
-            'create surveys',
-            'view surveys',
-            'view company surveys',
-            'view own surveys',
-            'view all surves',
+            'create-role',
+            'edit-role',
+            'destroy-role',
+            'show-role',
+            'generate-api',
+            'view-user',
+            'create-user',
+            'edit-user',
+            'destroy-user',
+            'create-vendor',
+            'view-vendor',
+            'delete-vendor',
+            'edit-vendor',
+            'view-surveys',
+            'view-surveys-projects',
+            'view-languages',
+            'view-countries',
+            'view-qualififcations',
+            'delete-vendor-assign-projects',
+            'view-vendor-assign-projects',
+            'create-vendor-assign-projects',
+            'data-reconcile-create',
+            'report-export',
+            'report-view',
+            'dashboard'
         ];
         foreach ($permissions as $perm) {
             Permission::firstOrCreate(['name' => $perm]);
         }
-
+        // Delete permissions that no longer exist in the array
+        Permission::whereNotIn('name', $permissions)->delete();
         // Assign permissions to roles
-        $superAdmin->givePermissionTo(['invite admin', 'view all surves', 'generate api']);
-        $admin->givePermissionTo(['invite admin', 'invite member', 'create short url', 'view company urls']);
-        $member->givePermissionTo(['create surveys', 'view own surveys', 'view own urls']);
-        $vendor->givePermissionTo(['view own surveys', 'view company surveys']);
-
+        $superAdmin->givePermissionTo($permissions);
+        $tenant->givePermissionTo([
+            'dashboard',
+            'create-role',
+            'edit-role',
+            'destroy-role',
+            'show-role',
+        ]);
         // Create SuperAdmin user
         $user = User::firstOrCreate(
             ['email' => 'superadmin@example.com'],
@@ -48,5 +67,14 @@ class RolePermissionSeeder extends Seeder
             ]
         );
         $user->assignRole('SuperAdmin');
+
+        $tenatUser = User::firstOrCreate(
+            ['email' => 'tenant@example.com'],
+            [
+                'name' => 'Tenant Admin',
+                'password' => bcrypt('password'),
+            ]
+        );
+        $tenatUser->assignRole('Tenant');
     }
 }

@@ -21,10 +21,7 @@ class InviteAdminController extends Controller
     public function create()
     {
         // Allow inviting Admin or Member
-        $roles = [
-            'Admin' => 'Admin',
-            'Member' => 'Employee',
-        ];
+        $roles = Role::query()->whereNotIN('name', ['SuperAdmin', 'Vendor', 'Tennat'])->get();
         return view('companies.invite-admin', compact('roles'));
     }
 
@@ -54,10 +51,7 @@ class InviteAdminController extends Controller
     public function edit($id)
     {
         $user = User::findOrFail($id);
-        $roles = [
-            'Admin' => 'Admin',
-            'Member' => 'Employee',
-        ];
+       $roles = Role::query()->whereNotIN('name', ['SuperAdmin', 'Vendor', 'Tennat'])->get();
         return view('companies.edit', compact('user', 'roles'));
     }
 
@@ -87,9 +81,33 @@ class InviteAdminController extends Controller
             ->with('success', 'User updated successfully.');
     }
 
-    public function index()
+    public function index(Request $request)
     {
-        $users = User::role(['Member', 'Admin'])->paginate(10);
-        return view('companies.invite-list', compact('users'));
+        $roles = Role::query()->whereNotIN('name', ['SuperAdmin', 'Vendor', 'Tenant'])->get();
+        $users = User::query()
+                        ->search(request('q'))
+                        ->when($request->role, function ($query, $role) {
+                            $query->whereHas('roles', function ($q) use ($role) {
+                                $q->where('name', $role);
+                            });
+                        })->whereHas('roles', function ($q) use ($roles) {
+                                $q->whereNotIn('name', ['SuperAdmin', 'Vendor', 'Tenant']);
+                            })
+                        ->paginate(10);
+        return view('companies.invite-list', compact('users', 'roles'));
+    }
+
+    public function destroy(User $user)
+    {
+        // Prevent deleting yourself (optional)
+        if (auth()->id() === $user->id) {
+            return redirect()->back()->with('error', 'You cannot delete your own account.');
+        }
+
+        $user->delete();
+
+        return redirect()
+            ->route('companies.invite-list')
+            ->with('success', 'User deleted successfully.');
     }
 }

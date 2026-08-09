@@ -45,8 +45,8 @@
                                             <div class="form-group">
                                                 <label for="role">Role <span>*</span></label>
                                                 <select name="role" id="role" class="form-control">
-                                                    @foreach($roles as $roleValue => $roleLabel)
-                                                        <option value="{{ $roleValue }}" @selected(old('role') == $roleValue)>{{ $roleLabel }}</option>
+                                                    @foreach($roles as $role)
+                                                        <option value="{{ $role->name }}" @selected(old('role') ==  $role->name)>{{ $role->display_name ?? $role->name }}</option>
                                                     @endforeach
                                                 </select>
                                                 @error('role')

@@ -11,6 +11,10 @@ class Vendor extends Model
 
     protected $guarded = [];
 
+    protected $casts = [
+        'expired_at' => 'date',
+    ];
+
     public function getCurrencyNameAttribute()
     {
         return match ($this->currency) {
@@ -25,5 +29,12 @@ class Vendor extends Model
     {
         return $this->belongsTo(User::class, 'user_id');
     }
+
+    public function vendorProjectAssigns()
+    {
+        return $this->hasMany(VendorProjectAssign::class, 'vendor_id', 'id');
+    }
+
+
 
 }

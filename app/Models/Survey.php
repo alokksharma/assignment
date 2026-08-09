@@ -67,4 +67,11 @@ class Survey extends Model
             str_pad($this->id, 4, '0', STR_PAD_LEFT);
 
     }
+
+    public function vendorProjectAssign()
+    {
+        return $this->hasMany(VendorProjectAssign::class, 'survey_id');
+
+    }
+
 }

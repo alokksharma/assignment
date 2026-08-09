@@ -11,7 +11,7 @@ use App\Models\vendor;
 use App\Models\SurveyQuestionOption;
 use App\Models\VendorProjectAssign;
 use Illuminate\Validation\Rule;
-use DB;
+use Illuminate\Support\Facades\{DB, Auth};
 
 class SurveController extends Controller
 {
@@ -21,6 +21,9 @@ class SurveController extends Controller
 
         $surveys = Survey::query()
         ->search(request('q'))
+         ->when(request('survey_status'), function ($query, $status) {
+            $query->where('status', $status);
+        })
         ->with([
             'questions.options',
             'country:id,name',
@@ -32,9 +35,12 @@ class SurveController extends Controller
 
     public function projects(Request $request)
     {
-
+      //s  dd($request->survey_status);
         $surveys = Survey::query()
         ->search(request('q'))
+         ->when($request->survey_status, function ($query, $status) {
+            $query->where('status', $status);
+        })
         ->with([
             'questions.options',
             'country:id,name',
@@ -59,11 +65,13 @@ class SurveController extends Controller
             ], 300);
         }
         $surve = collect($response->json('Data'));
+        $apiProjectIds = collect($surve)
+                    ->pluck('project_id')
+                    ->filter()
+                    ->unique();
         $surve->chunk(500)->each(function ($chunk) {
             foreach ($chunk as $item) {
-
                 DB::transaction(function () use ($item) {
-
                     $survey = Survey::updateOrCreate(
                         ['project_id' => $item['project_id']],
                         [
@@ -90,27 +98,23 @@ class SurveController extends Controller
                             'status'               => $item['status'],
                             'device_type'          => $item['device_type'],
                             'target_spec'          => $item['target_spec'],
+                            'updated_at' => now(),
                         ]
                     );
-
                     $data = $item['qualifications'] ?? [];
-
                     // No questions available
                     if (empty($data['question'])) {
                         return;
                     }
 
                     foreach ($data['question'] as $questionId) {
-
                         $surveyQuestion = SurveyQuestion::updateOrCreate(
                             [
                                 'survey_id'   => $survey->id,
                                 'question_id' => $questionId,
                             ]
                         );
-
                         $optionsData = $data['option'][$questionId] ?? [];
-
                         // Delete options that are no longer available
                         if (!empty($optionsData)) {
                             SurveyQuestionOption::where(
@@ -121,7 +125,6 @@ class SurveController extends Controller
                             ->delete();
 
                         } else {
-
                             // Remove all old options if no options exist
                             SurveyQuestionOption::where(
                                 'question_id',
@@ -132,9 +135,7 @@ class SurveController extends Controller
                         }
 
                         $options = [];
-
                         foreach ($optionsData as $optionCode) {
-
                             $options[] = [
                                 'question_id'        => $questionId,
                                 'option'        => $optionCode,
@@ -151,9 +152,14 @@ class SurveController extends Controller
                             );
                         }
                     }
+
                 });
             }
         });
+          Survey::whereNotIn('project_id', $apiProjectIds->all())
+                            ->update([
+                                'status' => 'Pause',
+                            ]);
 
         return response()->json([
             'status'  => true,
@@ -179,6 +185,9 @@ class SurveController extends Controller
         $vendors = Vendor::query()
             ->whereNotIn('id', $assignedVendorIds)
             //->where('status', 1)
+           ->when(Auth::user()->role === 'vendor', function ($query) {
+                $query->where('vendor_id', Auth::user()->vendor_id);
+            })
             ->when($request->search, function ($query) use ($request) {
                 $query->where('vendor_id', 'like', '%' . $request->search . '%');
             })
@@ -201,10 +210,16 @@ class SurveController extends Controller
 
     public function vendorProjectAssignList()
     {
-        $vendor_projects = VendorProjectAssign::query()->with(['vendor.user','survey'])->paginate(10);
+        $vendor_projects = VendorProjectAssign::query()
+            ->search(request('q'));
+        if(Auth::user()->hasRole('Vendor')){
+             $vendor_projects->where('vendor_id', Auth::user()->vendor->id);
+        }
+         $vendor_projects =  $vendor_projects->with(['vendor.user','survey'])->paginate(10);
          return view('masters.vendor-project-assign-list', compact('vendor_projects'));
 
     }
+
 
     public function vendorProjectAssignStore(Request $request, $id)
     {
@@ -217,10 +232,10 @@ class SurveController extends Controller
                                 return $query->where('survey_id', $id);
                             }),
                     ],
-                    'temp_complete' => ['required','string', 'max:255'],
-                    'temp_terminate' => ['required','string', 'max:255'],
-                    'temp_quotafull' => ['required','string', 'max:255'],
-                    'temp_speedster' => ['required','string', 'max:255'],
+                    'temp_complete' => ['nullable','string', 'max:255'],
+                    'temp_terminate' => ['nullable','string', 'max:255'],
+                    'temp_quotafull' => ['nullable','string', 'max:255'],
+                    'temp_speedster' => ['nullable','string', 'max:255'],
                     'temp_cpi' => [
                                 'required',
                                 'numeric',
@@ -229,10 +244,32 @@ class SurveController extends Controller
                             ],
                 ]);
            $vendor = Vendor::query()->findorfail($request->vendor_id);
+           $survey = Survey::query()->findorfail($id);
             $data['survey_id'] = $id;
+            $data['three_as_project_id'] = $survey->survey_code;
             $data['project_vendor_id'] =  $vendor->vendor_id.'_'.$id;
             VendorProjectAssign::create($data);
 
         return redirect()->route('vendor.project.assign.list')->with('success', 'Project assigned successfully.');
+    }
+
+    public function destroy(Survey $survey)
+    {
+         DB::transaction(function () use ($survey) {
+            // Delete related assigned projects
+            $survey->vendorProjectAssign()->delete();
+              foreach ($survey->questions as $question) {
+                    $question->options()->delete();
+                }
+
+            $survey->questions()->delete();
+
+            // Delete survey
+            $survey->delete();
+        });
+
+        return redirect()
+            ->route('surveys.index')
+            ->with('success', 'Survey deleted successfully.');
     }
 }

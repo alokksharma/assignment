@@ -14,10 +14,27 @@
                     <div class="card-header">
                         <div class="card-title d-flex justify-content-between align-items-center">
                             <span>Vendor List</span>
-                            <div>
-                                <a href="{{ route('vendors.create') }}" style="background-color:#007bff" class="bg-gray-800 hover:bg-gray-800 text-white font-bold py-2 px-4 rounded mb-4 inline-block">Create Vendor</a>
+                            <form id="searchForm"  action="{{ route('vendors.index') }}" method="GET" class="form-inline">
+                                <div class="form-group mr-2">
+                                     <label for="search" class="pr-3 font-weight-bold">Search</label>
+                                    <input type="text" name="q" class="form-control me-2" placeholder="Search ..." value="{{ request('q') }}">
+                                </div>
+                                <button type="submit" class="btn btn-light btn-sm mr-2">
+                                    <i class="fa fa-search">Filter</i>
+                                </button>
+                                @if(request('q'))
+                                    <a href="{{ route('vendors.index') }}" class="btn btn-secondary ms-2">
+                                        Reset
+                                    </a>
+                                @endif
 
-                            </div>
+                            @can('create-vendor')
+                                <div>
+                                    <a href="{{ route('vendors.create') }}" style="background-color:#007bff" class="bg-gray-800 hover:bg-gray-800 text-white font-bold py-2 px-4 rounded mb-4 inline-block">Create Vendor</a>
+
+                                </div>
+                            @endcan
+
                         </div>
                     </div>
                     <div class="table-responsive">
@@ -34,6 +51,9 @@
                                     <th>Speedster</th>
                                     <th>Expired At</th>
                                     <th>Modify At</th>
+                                    @canany(['edit-vendor', 'delete-vendor'])
+                                    <th>Action</th>
+                                    @endcanany
 
                                 </tr>
                             </thead>
@@ -56,7 +76,27 @@
                                     <td>{{ $user->vendor?->speedster }}</td>
                                     <td>{{ $user->vendor?->expired_at }}</td>
                                     <td>{{ $user->updated_at }}</td>
+                                    @canany(['edit-vendor', 'delete-vendor'])
+                                    <td>@can('edit-vendor')
+                                        <a href="{{route('vendors.edit', $user->id)}}" class="btn btn-sm btn-warning">Edit</a>
+                                        @endcan
+                                        @can('delete-vendor')
+                                            @if($user?->vendor && !$user->vendor->vendorProjectAssigns()->exists())
+                                            <form action="{{ route('vendors.destroy', $user->id) }}"
+                                                method="POST"
+                                                class="d-inline"
+                                                onsubmit="return confirm('Are you sure you want to delete this user?')">
+                                                @csrf
+                                                @method('DELETE')
 
+                                                <button type="submit" class="btn btn-danger btn-sm">
+                                                    <i class="fa fa-trash"></i> Delete
+                                                </button>
+                                            </form>
+                                            @endif
+                                        @endcan
+                                    </td>
+                                    @endcanany
                                 </tr>
                                 @empty
                                     <tr>

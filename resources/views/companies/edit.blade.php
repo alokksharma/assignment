@@ -75,10 +75,10 @@
                                 <div class="form-group">
                                     <label for="role">Role <span>*</span></label>
                                     <select name="role" id="role" class="form-control">
-                                        @foreach($roles as $roleValue => $roleLabel)
-                                            <option value="{{ $roleValue }}"
-                                                {{ old('role', $user->role) == $roleValue ? 'selected' : '' }}>
-                                                {{ $roleLabel }}
+                                        @foreach($roles as $role)
+                                            <option value="{{ $role->name }}"
+                                                {{ old('role', $user->role) == $role->name ? 'selected' : '' }}>
+                                                {{ $role->display_name ?? $role->name }}
                                             </option>
                                         @endforeach
                                     </select>

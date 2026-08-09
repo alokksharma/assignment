@@ -11,7 +11,7 @@ class VendorController extends Controller
 {
     public function index()
     {
-       $users = User::role('Vendor')->paginate(10);
+       $users = User::role('Vendor')->with('vendor.vendorProjectAssigns')->search(request('q'))->paginate(10);
         return view('companies.vendors.index', compact('users'));
     }
 
@@ -65,5 +65,74 @@ class VendorController extends Controller
         });
 
         return redirect()->route('vendors.index')->with('success', 'Vendor created successfully!');
+    }
+
+    public function edit($id)
+    {
+        $user = User::with('vendor')->findOrFail($id);
+
+        return view('companies.vendors.edit', compact('user'));
+    }
+
+    public function update(Request $request, $id)
+    {
+        $request->validate([
+            'name'  => 'required|string|max:255',
+            'email' => 'required|email|unique:users,email,' . $id,
+            'contact' => 'nullable|string|max:20',
+            'address' => 'nullable|string|max:255',
+        ]);
+
+        $user = User::findOrFail($id);
+
+        $user->update([
+            'name'  => $request->name,
+            'email' => $request->email,
+            'contact' => $request->contact,
+            'address' => $request->address,
+        ]);
+
+        // if ($user->vendor) {
+        //     $user->vendor->update([
+        //         'name'  => $request->company_name,
+        //         'phone' => $request->phone,
+        //     ]);
+        // }
+
+        return redirect()
+            ->route('companies.invite-list')
+            ->with('success', 'Vendor updated successfully.');
+    }
+
+    public function destroy(User $user)
+    {
+        // Prevent deleting yourself
+        if (auth()->id() === $user->id) {
+            return redirect()->back()
+                ->with('error', 'You cannot delete your own account.');
+        }
+
+        if ($user->hasRole('Vendor')) {
+
+            $vendor = $user->vendor;
+
+            // Check vendor assigned projects
+            if ($vendor && $vendor->vendorProjectAssigns()->exists()) {
+                return redirect()->back()
+                    ->with('error', 'Vendor cannot be deleted because projects are assigned.');
+            }
+
+            // Delete vendor record
+            if ($vendor) {
+                $vendor->delete();
+            }
+        }
+
+        // Delete user record
+        $user->delete();
+
+        return redirect()
+            ->route('vendors.index')
+            ->with('success', 'Vendor deleted successfully.');
     }
 }

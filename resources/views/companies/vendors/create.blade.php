@@ -98,16 +98,7 @@
                                                     @enderror
                                                 </div>
                                             </div>
-                                            {{-- <div class="col-md-6">
-                                                <div class="form-group">
-                                                    <label for="vendor_id">Vendor ID <span>*</span></label>
-                                                    <input type="text" name="vendor_id" class="form-control" id="vendor_id" placeholder="Enter Vendor Speedster" value="{{ old('vendor_id') }}">
-                                                    <span>vendor id must be six digit</span>
-                                                    @error('vendor_id')
-                                                        <span class="text-danger">{{ $message }}</span>
-                                                    @enderror
-                                                </div>
-                                            </div> --}}
+
                                             <div class="col-md-6">
                                                 <div class="form-group">
                                                     <label for="expired_at">Expired At <span>*</span></label>
@@ -121,7 +112,7 @@
                                     </div>
                                     <div class="card-action">
                                         <button class="btn btn-success">Submit</button>
-                                        <a href="{{ route('companies.invite-list') }}" class="btn btn-danger">Cancel</a>
+                                        <a href="{{ route('vendors.index') }}" class="btn btn-danger">Cancel</a>
                                     </div>
 
                                 </form>

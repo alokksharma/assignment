@@ -9,13 +9,28 @@
                     <div class="card-header">
                         <div class="d-flex justify-content-between align-items-center flex-wrap">
                             <h5 class="mb-0">Client Survey List</h5>
-                            <form id="searchForm"  action="{{ route('surveys') }}" method="GET" class="d-flex">
-                                <input type="text" name="q" class="form-control me-2" placeholder="Search survey..." value="{{ request('q') }}">
+                            <form id="searchForm"  action="{{ route('surveys') }}" method="GET" class="form-inline">
+                                <div class="form-group mr-2">
+                                     <label for="search" class="pr-3 font-weight-bold">Search</label>
+                                    <input type="text" name="q" class="form-control me-2" placeholder="Search survey..." value="{{ request('q') }}">
+                                </div>
+                                 <div class="form-group mr-2">
+                                    <label for="vpi" class="pr-3 font-weight-bold">Project Status</label>
+                                    <select name="survey_status" id="vpi" class="form-control vendor_list select2">
+                                        <option value="Live" {{ request('survey_status') == 'Live' ? 'selected' : '' }}>Live</option>
+                                        <option value="Pause" {{ request('survey_status') == 'Pause' ? 'selected' : '' }}>Pause</option>
+                                        <option value="Test" {{ request('survey_status') == 'Test' ? 'selected' : '' }}>Test</option>
+                                    </select>
+                                </div>
+                                <button type="submit" class="btn btn-light btn-sm mr-2">
+                                    <i class="fa fa-search">Filter</i>
+                                </button>
                                 @if(request('q'))
                                     <a href="{{ route('surveys') }}" class="btn btn-secondary ms-2">
                                         Reset
                                     </a>
                                 @endif
+
                             </form>
                         </div>
                         @if(session('success'))
