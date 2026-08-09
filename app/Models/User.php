@@ -60,5 +60,25 @@ class User extends Authenticatable
         return $this->hasMany(ShortUrl::class);
     }
 
+    public function vendor()
+    {
+        return $this->hasOne(Vendor::class, 'user_id');
+    }
+
+    public function scopeSearch($query, $searchTerm)
+    {
+        if (blank($searchTerm)) {
+            return $query;
+        }
+
+        return $query->where(function ($q) use ($searchTerm) {
+            $q->where('name', 'like', "%{$searchTerm}%")
+              ->orWhere('email', 'like', "%{$searchTerm}%")
+              ->orwhereHas('vendor', function ($subQuery) use ($searchTerm) {
+                  $subQuery->where('vendor_id', 'like', "%{$searchTerm}%");
+              });
+        });
+    }
+
 
 }

@@ -21,73 +21,93 @@ class InviteAdminController extends Controller
     public function create()
     {
         // Allow inviting Admin or Member
-        $roles = [
-            'Admin' => 'Admin',
-            'Member' => 'Member',
-        ];
-        $company = Auth::user()->company; // Get the current user's company
-        return view('companies.invite-admin', compact('company', 'roles'));
+        $roles = Role::query()->whereNotIN('name', ['SuperAdmin', 'Vendor', 'Tennat'])->get();
+        return view('companies.invite-admin', compact('roles'));
     }
 
     public function store(Request $request)
     {
-        if(Auth::user()->hasRole('SuperAdmin')) {
-                $request->validate([
-                    'name' => 'required|string|max:255',
-                    'email' => 'required|email|unique:users,email',
-                    'company_name' => 'required|string|max:255',
-                ]);
-        }else{
-             $request->validate([
-                'name' => 'required|string|max:255',
-                'email' => 'required|email|unique:users,email',
-                'role' => 'required|in:Admin,Member',
-            ]);
-        }
-       // dd($request->all());
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|unique:users,email',
+            'role' => 'required|in:Admin,Member',
+        ]);
         //Create Company if role is Superadmin
-        if(Auth::user()->hasRole('SuperAdmin')) {
-            $company = $request->company_name;
-            $newCompany = \App\Models\Company::create(['name' => $company]);
-            $companyId = $newCompany->id;
-        } else {
-            $companyId = Auth::user()->company_id; // Use the current user's company_id
-        }
 
         $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
-            'company_id' => $companyId,
+            'address' => $request->address,
+            'contact' => $request->contact,
             'password' => Hash::make('12345678'),
 
         ]);
-        if(Auth::user()->hasRole('SuperAdmin')) {
-            $user->assignRole('Admin'); // Default role for SuperAdmin inviting
-            $role = 'Admin';
-        } else {
-            $user->assignRole($request->role); // Assign the role based on the request
-             $role = $request->role;
-        }
-     //   $user->assignRole($request->role);
-        // Store invite record
-        //update query using Invite models
-      //  if(Auth::user()->roles == 'Admin' ) {
-             Invite::create([
-                    'user_id' => $user->id,
-                    'invite_id' => Auth::user()->id,
-                ]);
-      //  }
+        $user->assignRole($request->role); // Assign the role based on the request
+        $role = $request->role;
 
         return redirect()->route('companies.invite-list')->with('success', $request->role . ' created successfully!');
     }
 
-    public function index()
+    public function edit($id)
     {
-        // Show a list of invited users for the current user's company
-        $company = Auth::user()->company;
-       // dd(Auth::user()->id); // Debugging line to check the company data
-           $users = $this->inviteList();
-             //   dd($users); // Debugging line to check the users data
-        return view('companies.invite-list', compact('company', 'users'));
+        $user = User::findOrFail($id);
+       $roles = Role::query()->whereNotIN('name', ['SuperAdmin', 'Vendor', 'Tennat'])->get();
+        return view('companies.edit', compact('user', 'roles'));
+    }
+
+
+    public function update(Request $request, $id)
+    {
+        $user = User::findOrFail($id);
+
+        $request->validate([
+            'name' => 'required|string|max:30',
+            'email' => 'required|email|unique:users,email,' . $user->id,
+            'address' => 'nullable|string|max:255',
+            'contact' => 'nullable|string|max:20',
+            'role' => 'required',
+        ]);
+
+        $user->update([
+            'name' => $request->name,
+            'email' => $request->email,
+            'address' => $request->address,
+            'contact' => $request->contact,
+            'role' => $request->role,
+        ]);
+
+        return redirect()
+            ->route('companies.invite-list')
+            ->with('success', 'User updated successfully.');
+    }
+
+    public function index(Request $request)
+    {
+        $roles = Role::query()->whereNotIN('name', ['SuperAdmin', 'Vendor', 'Tenant'])->get();
+        $users = User::query()
+                        ->search(request('q'))
+                        ->when($request->role, function ($query, $role) {
+                            $query->whereHas('roles', function ($q) use ($role) {
+                                $q->where('name', $role);
+                            });
+                        })->whereHas('roles', function ($q) use ($roles) {
+                                $q->whereNotIn('name', ['SuperAdmin', 'Vendor', 'Tenant']);
+                            })
+                        ->paginate(10);
+        return view('companies.invite-list', compact('users', 'roles'));
+    }
+
+    public function destroy(User $user)
+    {
+        // Prevent deleting yourself (optional)
+        if (auth()->id() === $user->id) {
+            return redirect()->back()->with('error', 'You cannot delete your own account.');
+        }
+
+        $user->delete();
+
+        return redirect()
+            ->route('companies.invite-list')
+            ->with('success', 'User deleted successfully.');
     }
 }
