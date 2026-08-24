@@ -2,7 +2,7 @@
 
 namespace Tests\Feature;
 
-//use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Foundation\Testing\WithFaker;
 use Spatie\Permission\Models\Role;
 use Tests\TestCase;
@@ -11,7 +11,14 @@ use App\Models\Company;
 
 class UserListTest extends TestCase
 {
-    //use RefreshDatabase;
+    use RefreshDatabase;
+
+     protected function setUp(): void
+    {
+        parent::setUp();
+        $this->artisan('migrate:fresh');
+        $this->seed(\Database\Seeders\RolePermissionSeeder::class);
+    }
 
     /** @test */
     public function superadmin_and_admin_can_access_user_list()

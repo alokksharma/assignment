@@ -7,11 +7,23 @@ use App\Models\Company;
 use App\Models\Invite;
 use Illuminate\Support\Facades\Hash;
 use Spatie\Permission\Models\Role;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
+use Tests\TestHelper;
 
 class UserStoreTest extends TestCase
 {
    
+    use RefreshDatabase, TestHelper;
+    
+     protected function setUp(): void
+    {
+        parent::setUp();
+        //migrate the database
+        $this->artisan('migrate:fresh');
+        // Seed roles and permissions
+        $this->seed(\Database\Seeders\RolePermissionSeeder::class);
+    }
 
     /** @test */
     public function superadmin_can_create_user_and_company()
@@ -19,17 +31,9 @@ class UserStoreTest extends TestCase
         $superAdmin = User::factory()->create();
         $superAdmin->assignRole('SuperAdmin');
         $userEmail = 'user' . uniqid() . '@example.com';
-        $response = $this->actingAs($superAdmin)->post(route('companies.invite-admin.store'),[
-            'name' => 'User One'.uniqid(),
-            'email' => $userEmail,
-            'company_name' => 'New Company Inc',
-            'role' => 'Admin',
-        ]);
+        $response = $this->createTestRoles('SuperAdmin', $superAdmin, $userEmail);
 
         $response->assertRedirect(route('companies.invite-list'));
-
-        // $this->assertDatabaseHas('companies', ['name' => 'New Company Inc']);
-        // $this->assertDatabaseHas('users', ['email' => 'user1@example.com']);
         $createdUser = User::where('email', $userEmail)->first();
         $this->assertDatabaseHas('invites', [
             'user_id' => $createdUser->id,
@@ -53,12 +57,7 @@ class UserStoreTest extends TestCase
 
         // Step 3: Acting as admin, create a new user with role 'Admin'
         $adminUserEmail = 'adminuser' . uniqid() . '@example.com';
-        $responseAdmin = $this->actingAs($admin)->post(route('companies.invite-admin.store'),[
-            'name' => 'Admin User'. uniqid(),
-            'email' => $adminUserEmail,
-            'role' => 'Admin',
-        ]);
-
+        $responseAdmin = $this->createTestRoles('Admin', $admin, $adminUserEmail);
         $responseAdmin->assertRedirect(route('companies.invite-list'));
 
         $adminUser = User::where('email', $adminUserEmail)->first();
@@ -68,11 +67,7 @@ class UserStoreTest extends TestCase
 
         // Step 4: Acting as admin again, create a new user with role 'Member'
         $memberUserEmail = 'memberuser' . uniqid() . '@example.com';
-        $responseMember = $this->actingAs($admin)->post(route('companies.invite-admin.store'), [
-            'name' => 'Member User'. uniqid(),
-            'email' => $memberUserEmail,
-            'role' => 'Member',
-        ]);
+        $responseMember = $this->createTestRoles('Member', $admin, $memberUserEmail);
 
         $responseMember->assertRedirect(route('companies.invite-list'));
 
@@ -106,6 +101,24 @@ class UserStoreTest extends TestCase
         $response->assertSessionHasErrors(['name', 'email', 'role']);   
 
     }
+
+
+    /** @test */
+    public function member_can_not_invite_user()
+    {
+        $member = User::factory()->create();
+        $member->assignRole('Member');
+
+        $response = $this->actingAs($member)->post(route('companies.invite-admin.store'), [
+            'name' => 'member ' . uniqid(),
+            'email' => 'member' . uniqid() . '@example.com',
+            'role' => 'Member',
+        ]);
+
+        $response->assertStatus(403);
+    }
+
+    
 
 
 }

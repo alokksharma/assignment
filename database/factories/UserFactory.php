@@ -41,4 +41,13 @@ class UserFactory extends Factory
             'email_verified_at' => null,
         ]);
     }
+
+    public function configure()
+    {
+        return $this->afterCreating(function ($user) {
+            $roles = ['Admin', 'Member'];
+
+            $user->assignRole(fake()->randomElement($roles));
+        });
+    }
 }

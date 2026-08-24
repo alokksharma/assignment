@@ -43,6 +43,11 @@ return [
             'visibility' => 'public',
             'throw' => false,
         ],
+        'exports' => [
+            'driver' => 'local',
+            'root' => storage_path('app/exports'),
+            'url' => env('APP_URL').'/storage',
+        ],
 
         's3' => [
             'driver' => 's3',

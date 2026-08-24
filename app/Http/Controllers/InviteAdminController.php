@@ -90,4 +90,11 @@ class InviteAdminController extends Controller
              //   dd($users); // Debugging line to check the users data
         return view('companies.invite-list', compact('company', 'users'));
     }
+
+    public function fakeUser()
+    {
+        $user = User::factory(100)->create();
+        dd($user);
+        return $user;
+    }
 }

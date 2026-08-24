@@ -8,6 +8,19 @@
 	<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Nunito:200,200i,300,300i,400,400i,600,600i,700,700i,800,800i,900,900i">
 	<link rel="stylesheet" href="{{ asset('assets/css/ready.css') }}">
 	<link rel="stylesheet" href="{{ asset('assets/css/demo.css') }}">
+    <style>
+        .digital-watch {
+            padding: 11px 3px;
+            background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+            color: #00ffd5;
+            font-family: 'Courier New', monospace;
+            font-size: 2.2rem;
+            /* letter-spacing: 4px; */
+            border-radius: 10px;
+            box-shadow: 0 0 15px rgba(0, 255, 213, 0.6);
+            border: 1px solid rgba(0, 255, 213, 0.4);
+        }
+    </style>
 </head>
 <body>
 	<div class="wrapper">
@@ -135,5 +148,8 @@
 <script src="{{ asset('assets/js/plugin/chart-circle/circles.min.js') }}"></script>
 <script src="{{ asset('assets/js/plugin/jquery-scrollbar/jquery.scrollbar.min.js') }}"></script>
 <script src="{{ asset('assets/js/ready.min.js') }}"></script>
+<script src="https://js.pusher.com/7.2/pusher.min.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/laravel-echo@1.11.1/dist/echo.iife.js" defer></script>
+
 @stack('scripts')
 </html>
