@@ -8,6 +8,15 @@ use Tests\TestCase;
 
 class ShortListTest extends TestCase
 {
+    use RefreshDatabase;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->artisan('migrate:fresh');
+        $this->seed(\Database\Seeders\RolePermissionSeeder::class);
+    }
+
     /**
      * A basic feature test example.
      */
@@ -19,6 +28,9 @@ class ShortListTest extends TestCase
         $admin->assignRole('Admin');
         $member = User::factory()->create();
         $member->assignRole('Member');
+        ShortUrl::factory()->count(15)->create([
+            'user_id' => $admin->id
+        ]);
         $response = $this->actingAs($superAdmin)->get('/short_urls');
         $response->assertStatus(200);
         $response = $this->actingAs($admin)->get('/short_urls');
@@ -29,4 +41,9 @@ class ShortListTest extends TestCase
         $response->assertStatus(403); // Assuming members cannot access the user list
 
     }
+
+    // public function short_list_create(){
+
+    //    $shorturllist = ShortUrlFactory::factory()->create();
+    // }
 }

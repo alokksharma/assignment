@@ -103,6 +103,7 @@ class UserStoreTest extends TestCase
     }
 
 
+    /** @test */
     public function member_can_not_invite_user()
     {
         $member = User::factory()->create();

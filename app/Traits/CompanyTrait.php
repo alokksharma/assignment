@@ -14,25 +14,18 @@ trait CompanyTrait
     {
          $user = Auth::user();
         if ($user->hasRole('Admin')) {
-            // Get all users invited by this admin (where user is inviter or invitee)
-            // $invite_id = $user->id;
-            //  $users = Invite::where('invite_id', $invite_id)->get();
-            //  if ($users->isEmpty()) {
-            //      $userIds = [$invite_id];
-            //  }else{
-            //      $userIds = $users->pluck('user_id')->merge($invite_id)->all();
-            //  }
+            
              $shortUrls = ShortUrl::with('user')->whereHas(
                 'user',
                 function ($query) use ($user) {
                     $query->where('company_id', $user->company_id);
                 }
-             )->paginate(10);
+             )->latest()->paginate(10);
 
         } elseif ($user->hasRole('Member')) {
-            $shortUrls = ShortUrl::where('user_id', $user->id)->paginate(10);
+            $shortUrls = ShortUrl::where('user_id', $user->id)->latest()->paginate(10);
         } else {
-            $shortUrls = ShortUrl::paginate(10);
+            $shortUrls = ShortUrl::latest()->paginate(10);
         }
         return $shortUrls;
     }
@@ -42,10 +35,10 @@ trait CompanyTrait
         $user = Auth::user();
         if ($user->hasRole('Admin')) {
             // Get all invites where this user is the inviter
-            return User::where('company_id', $user->company_id)->where('id', '!=' , $user->id)->paginate(10);
+            return User::where('company_id', $user->company_id)->where('id', '!=' , $user->id)->latest()->paginate(10);
         } elseif ($user->hasRole('SuperAdmin')) {
             // Get all invites where this user is invited
-            return User::whereNotNull('company_id')->paginate(10);
+            return User::whereNotNull('company_id')->latest()->paginate(10);
         }else{
              return '';
         }
