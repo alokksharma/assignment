@@ -4,6 +4,7 @@ use App\Http\Controllers\InviteAdminController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ShortUrlController;
 use App\Http\Controllers\SettingsController;
+use App\Http\Controllers\InvoiceController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Redis;
 use App\Http\Controllers\ExportController;
@@ -41,6 +42,10 @@ Route::middleware('auth')->group(function () {
     Route::get('/exports/{export}/download', [ExportController::class, 'download'])->name('exports.download');
     Route::get('/fake-users', [InviteAdminController::class, 'fakeUser'])->name('fake.users');
     Route::get('temporary-storage/{temporary_storage}', [TemporaryStorageController::class, 'show']);
+    Route::get('/invoices/{id}/export', [InvoiceController::class, 'export'])->name('invoices.export');
+    Route::get('/invoices/{id}/show', [InvoiceController::class, 'show'])->name('invoices.show');
+    Route::get('/invoice/create', [InvoiceController::class, 'create'])->name('invoices.create');
+    Route::post('/invoices', [InvoiceController::class, 'store'])->name('invoices.store');
 });
 
 Route::middleware(['auth', 'role:SuperAdmin|Admin'])->group(function () {
