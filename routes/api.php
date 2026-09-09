@@ -2,6 +2,7 @@
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Api\PartnerApiController;
 
 /*
 |--------------------------------------------------------------------------
@@ -14,6 +15,13 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
-    return $request->user();
+Route::get('parners', [PartnerApiController::class, 'parners'])->name('parners');
+
+Route::middleware('supplier.auth')->group(function () {
+
+    Route::get('languages', [PartnerApiController::class, 'languages'])->name('languages');
+    Route::get('countries', [PartnerApiController::class, 'countries'])->name('countries');
+    Route::get('qualifications', [PartnerApiController::class, 'qualifications'])->name('qualifications');
+    Route::get('survey', [PartnerApiController::class, 'survey'])->name('survey');
+   // return $request->user();
 });

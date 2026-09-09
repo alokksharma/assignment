@@ -77,7 +77,7 @@
                                     </div>
                                     <div class="card-action">
                                         <button class="btn btn-success">Submit</button>
-                                        <a href="{{ route('vendor.project.report') }}" class="btn btn-danger">Cancel</a>
+                                        <a href="{{ route('survey.project') }}" class="btn btn-danger">Cancel</a>
 
                                     </div>
 

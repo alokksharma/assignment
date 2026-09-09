@@ -8,10 +8,13 @@ use App\Models\Survey;
 use App\Models\SurveyQuestion;
 use App\Models\Project;
 use App\Models\vendor;
+use App\Models\Country;
+use App\Models\Language;
 use App\Models\SurveyQuestionOption;
 use App\Models\VendorProjectAssign;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\{DB, Auth};
+use Illuminate\Pagination\LengthAwarePaginator;
 
 class SurveController extends Controller
 {
@@ -21,25 +24,32 @@ class SurveController extends Controller
 
         $surveys = Survey::query()
         ->search(request('q'))
-         ->when(request('survey_status'), function ($query, $status) {
+        ->when(request('survey_status'), function ($query, $status) {
             $query->where('status', $status);
+        })
+        ->when(request('supplier_id'), function ($query, $supplierId) {
+            $query->where('api_project_id', $supplierId);
         })
         ->with([
             'questions.options',
             'country:id,name',
             'language:id,name',
+            'supplier',
         ])
         ->paginate(20);
-        return view('masters.surveys', compact('surveys'));
+        $suppliers = Project::where('status', 1)->get();
+        return view('masters.surveys', compact('surveys', 'suppliers'));
     }
 
     public function projects(Request $request)
     {
-      //s  dd($request->survey_status);
         $surveys = Survey::query()
         ->search(request('q'))
-         ->when($request->survey_status, function ($query, $status) {
+        ->when($request->survey_status, function ($query, $status) {
             $query->where('status', $status);
+        })
+        ->when($request->supplier_id, function ($query, $supplierId) {
+            $query->where('api_project_id', $supplierId);
         })
         ->with([
             'questions.options',
@@ -47,38 +57,64 @@ class SurveController extends Controller
             'language:id,name',
         ])
         ->paginate(20);
-        $project = Project::where('name', '3AS_API')->first();
-        return view('masters.survey_project', compact('surveys','project'));
+        $suppliers = Project::get();
+        return view('masters.survey_project', compact('surveys','suppliers'));
     }
 
-    public function syncSurve()
+    public function syncSurve(Request $request)
     {
-        $url = config('marketxcel.base_url') . '/send_supplier_data';
-        $response = Http::withHeaders([
-            'Supplierid' => config('marketxcel.supplier_id'),
-            'Token' => config('marketxcel.supplier_token'),
-        ])->get($url);
-        if (!$response->successful()) {
-            return response()->json([
-                'status'  => false,
-                'message' => 'Failed to fetch Survey data.',
-            ], 300);
-        }
-        $surve = collect($response->json('Data'));
-        $apiProjectIds = collect($surve)
-                    ->pluck('project_id')
-                    ->filter()
-                    ->unique();
-        $surve->chunk(500)->each(function ($chunk) {
-            foreach ($chunk as $item) {
-                DB::transaction(function () use ($item) {
+        try {
+            $url = config('marketxcel.base_url') . '/send_supplier_data';
+            $supplier_id = config('marketxcel.supplier_id');
+            $supplier_token = config('marketxcel.supplier_token');
+            $supplier = $request->supplier_id ? Project::findOrFail($request->supplier_id) : null;
+            $url            = $supplier ? $supplier->url . '/send_supplier_data' : config('marketxcel.base_url') . '/send_supplier_data';
+            $supplierId     = $supplier ? $supplier->supplier_id : config('marketxcel.supplier_id');
+            $supplierToken  = $supplier ? $supplier->supplier_token : config('marketxcel.supplier_token');
+            $apiProjectPk   = $supplier ? $supplier->id : null;
+
+            $response = Http::withHeaders([
+                'Supplierid' => $supplierId,
+                'Token'      => $supplierToken,
+            ])->get($url);
+
+            if (!$response->successful()) {
+                return view('survey.error_response', ['error' => 'Failed to fetch Survey data.']);
+            }
+            $allRows = collect($response->json('Data'));
+            $requestCount = $allRows->count();
+
+            // --- pagination on the already-fetched collection ---
+            $perPage    = (int) $request->input('per_page', 100);
+            $page       = (int) $request->input('page', 1);
+            // Preload lookups once instead of per-row queries
+            $paginatedRows = new LengthAwarePaginator(
+                $allRows->forPage($page, $perPage)->values(), // items for this page
+                $allRows->count(),                            // total items
+                $perPage,
+                $page,
+                ['path' => $request->url(), 'query' => $request->query()]
+            );
+            $rows = collect($paginatedRows->items());
+            $apiProjectIds = collect($rows)
+                        ->pluck('project_id')
+                        ->filter()
+                        ->unique();
+            $countries = Country::pluck('id', 'name');
+            $languages = Language::pluck('id', 'name');
+            $rows->chunk(50)->each(function ($chunk) use ($supplier, $apiProjectPk, $countries, $languages){
+                foreach ($chunk as $item) {
                     $survey = Survey::updateOrCreate(
-                        ['project_id' => $item['project_id']],
                         [
+                            'project_id' => $item['project_id'],
+                            'api_project_id' =>  $apiProjectPk,
+                        ],
+                        [
+                            'api_project_id' =>  $apiProjectPk,
                             'project_code'         => $item['project_code'],
                             'project_name'         => $item['project_name'],
-                            'country_id'           => $item['country_id'],
-                            'language_id'          => $item['language_id'],
+                            'country_id'           => $countries[$item['country'] ?? ''] ?? null,
+                            'language_id'          => $languages[$item['language'] ?? ''] ?? null,
                             'category'             => $item['category'],
                             'currency'             => $item['currency'],
                             'audience_type'        => $item['audience_type'],
@@ -89,15 +125,15 @@ class SurveController extends Controller
                             'project_loi'          => $item['project_loi'],
                             'cpi'                  => $item['cpi'],
                             'quota'                => $item['quota'],
-                            'live_click_quota'     => $item['live_click_quota'],
-                            'test_click_quota'     => $item['test_click_quota'],
+                            'live_click_quota'     => $item['live_click_quota'] ?? $item['live_quota'],
+                            'test_click_quota'     => $item['test_click_quota'] ??  $item['test_quota'],
                             'project_start_date'   => $item['project_start_date'],
                             'project_end_date'     => $item['project_end_date'],
                             'live_url'             => $item['live_url'],
                             'test_url'             => $item['test_url'],
-                            'status'               => $item['status'],
+                            'status'               => $item['status'] ?? 'Live',
                             'device_type'          => $item['device_type'],
-                            'target_spec'          => $item['target_spec'],
+                            'target_spec'           => is_array($item['target_spec'] ?? null) ? json_encode($item['target_spec']) : ($item['target_spec'] ?? null),
                             'updated_at' => now(),
                         ]
                     );
@@ -152,20 +188,30 @@ class SurveController extends Controller
                             );
                         }
                     }
+                }
+            });
+            Survey::whereNotIn('project_id', $apiProjectIds->all())
+                        ->where('api_project_id', $request->supplier_id)
+                                ->update([
+                                    'status' => 'Pause',
+                                ]);
+            $updatedCount = Survey::where('api_project_id', $request->supplier_id)->where('status','Live')->count();
 
-                });
-            }
-        });
-          Survey::whereNotIn('project_id', $apiProjectIds->all())
-                            ->update([
-                                'status' => 'Pause',
-                            ]);
+            $content = "Survey synced successfully.";
+            $full_url = url()->full();
+             return view('survey.api_response', [
+                'updatedCount' => $updatedCount,
+                'requestCount' => $requestCount,
+                'content'      => 'Survey synced successfully.',
+                'full_url'     => url()->full(),
+                'paginator'    => $paginatedRows,
+                'supplierId'   => $request->supplier_id,
+            ]);
+        } catch (\Throwable $th) {
+            $error = $th->getMessage();
+            return view('survey.error_response', compact('error'));
+        }
 
-        return response()->json([
-            'status'  => true,
-            'message' => 'Survey synced successfully.',
-            'data'    => Survey::all(),
-        ]);
     }
 
     public function vendorProjectAssign($id)
@@ -184,14 +230,12 @@ class SurveController extends Controller
 
         $vendors = Vendor::query()
             ->whereNotIn('id', $assignedVendorIds)
-            //->where('status', 1)
            ->when(Auth::user()->role === 'vendor', function ($query) {
                 $query->where('vendor_id', Auth::user()->vendor_id);
             })
             ->when($request->search, function ($query) use ($request) {
                 $query->where('vendor_id', 'like', '%' . $request->search . '%');
             })
-           // ->orderBy('vendor_id', 'asc')
             ->paginate(10);
 
         return response()->json([
@@ -210,8 +254,8 @@ class SurveController extends Controller
 
     public function vendorProjectAssignList()
     {
-        $vendor_projects = VendorProjectAssign::query()
-            ->search(request('q'));
+        $vendor_projects = VendorProjectAssign::query()->search(request('q'));
+
         if(Auth::user()->hasRole('Vendor')){
              $vendor_projects->where('vendor_id', Auth::user()->vendor->id);
         }
@@ -253,23 +297,13 @@ class SurveController extends Controller
         return redirect()->route('vendor.project.assign.list')->with('success', 'Project assigned successfully.');
     }
 
-    public function destroy(Survey $survey)
+    public function destroy(VendorProjectAssign $vendorProjectAssign)
     {
-         DB::transaction(function () use ($survey) {
             // Delete related assigned projects
-            $survey->vendorProjectAssign()->delete();
-              foreach ($survey->questions as $question) {
-                    $question->options()->delete();
-                }
-
-            $survey->questions()->delete();
-
-            // Delete survey
-            $survey->delete();
-        });
+            $vendorProjectAssign->delete();
 
         return redirect()
-            ->route('surveys.index')
-            ->with('success', 'Survey deleted successfully.');
+            ->route('vendor.project.report')
+            ->with('success', 'Survey project deleted successfully.');
     }
 }

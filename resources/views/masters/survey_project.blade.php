@@ -12,8 +12,34 @@
                     <div class="card-header">
                         <div class="d-flex justify-content-between align-items-center flex-wrap">
                             <h5 class="mb-0">3AS Survey List</h5>
-                            <form id="searchForm"  action="{{ route('survey.project') }}" method="GET" class="d-flex">
-                                <input type="text" name="q" class="form-control me-2" placeholder="Search survey..." value="{{ request('q') }}">
+                            <form id="searchForm"  action="{{ route('survey.project') }}" method="GET" class="form-inline">
+                                <div class="form-group mr-2">
+                                     <label for="search" class="pr-3 font-weight-bold">Search</label>
+                                    <input type="text" name="q" class="form-control me-2" placeholder="Search survey..." value="{{ request('q') }}">
+                                </div>
+                                 <div class="form-group mr-2">
+                                    <label for="vpi" class="pr-3 font-weight-bold">Project Status</label>
+                                    <select name="survey_status" id="vpi" class="form-control vendor_list select2">
+                                        <option value="Live" {{ request('survey_status') == 'Live' ? 'selected' : '' }}>Live</option>
+                                        <option value="Pause" {{ request('survey_status') == 'Pause' ? 'selected' : '' }}>Pause</option>
+                                        <option value="Test" {{ request('survey_status') == 'Test' ? 'selected' : '' }}>Test</option>
+                                    </select>
+                                </div>
+                                <div class="form-group mr-2">
+                                    <label for="supplier_id" class="pr-3 font-weight-bold">Supplier</label>
+                                    <select name="supplier_id" id="supplier_id" class="form-control vendor_list select2">
+                                        <option value="">All Suppliers</option>
+                                        @foreach($suppliers as $supplier)
+                                            <option value="{{ $supplier->id }}"
+                                                {{ request('supplier_id') == $supplier->id ? 'selected' : '' }}>
+                                                {{ $supplier->name }} - {{ $supplier->code }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                <button type="submit" class="btn btn-light btn-sm mr-2">
+                                    <i class="fa fa-search">Filter</i>
+                                </button>
                                 @if(request('q'))
                                     <a href="{{ route('surveys') }}" class="btn btn-secondary ms-2">
                                         Reset
@@ -68,7 +94,9 @@
                                     <th>Device Type</th>
                                     <th>Survey Qualification</th>
                                     <th>Survey Target Spec</th>
+                                     @can('create-vendor-assign-projects')
                                     <th>Action</th>
+                                    @endcan
                                 </tr>
                             </thead>
                             <tbody>
@@ -92,7 +120,7 @@
                                     <th scope="row">{{ $i }}</th>
                                     <td>{{ $survey->survey_code }}</td>
                                     @unless($isVendor)
-                                        <td>{{ $survey->project_id }}</td>
+                                        <td>{{ ($survey->supplier?->code ?? 'mx').''.$survey->project_id }}</td>
                                         <td>{{ $survey->project_name }}</td>
                                         <td>{{ $survey->project_code }}</td>
                                     @endunless
@@ -147,17 +175,19 @@
                                             Show details</p>
                                         </button>
                                     </th>
+                                    @can('create-vendor-assign-projects')
                                     <th><a href="{{ route('vendor.project.assign', $survey->id)}}" class="btn btn-sm btn-warning"><i class="la la-plus"></i></a></th>
+                                    @endcan
                                 </tr>
                                 @empty
                                     <tr>
-                                        <td colspan="6" class="text-center">No records found.</td>
+                                        <td colspan="32" class="text-center">No records found.</td>
                                     </tr>
                                 @endforelse
                                     {{-- pagination --}}
                                     @if ($surveys->hasPages())
                                             <tr>
-                                        <td colspan="26" class="text-left">
+                                        <td colspan="32" class="text-left">
                                             <div class="d-flex justify-content-left">
                                                 {{ $surveys->appends(request()->query())->links('pagination::bootstrap-4') }}
                                             </div>

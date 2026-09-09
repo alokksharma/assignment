@@ -11,6 +11,7 @@ use App\Models\Question;
 use App\Models\Survey;
 use App\Models\VendorProjectAssign;
 use App\Models\Proof;
+use App\Models\Project;
 
 class DashboardController extends Controller
 {
@@ -25,11 +26,11 @@ class DashboardController extends Controller
         $totalVendorAssign = 0;
         $totalAssignProject = 0;
         $projectCount = Proof::query();
-        if (Auth::user()->hasRole('SuperAdmin') || Auth::user()->hasRole('Admin') || Auth::user()->hasRole('Tenant')) {
+        $suppliers = Project::where('status', 1)->get();
+        if (Auth::user()->hasRole('SuperAdmin') || Auth::user()->hasRole('Admin')) {
             $languagesCount = Language::query()->count();
             $countriesCount = Country::query()->count();
             $questionsCount = Question::query()->count();
-            //$surveysCount = Survey::query()->count();
             $surveysCount = Survey::selectRaw("
                                 COUNT(*) as total,
                                 SUM(status = 'Live') as live,
@@ -39,9 +40,7 @@ class DashboardController extends Controller
             $totalAssignProject = VendorProjectAssign::query()->count();
             $totalVendorAssign = VendorProjectAssign::query()->distinct('vendor_id')->count('vendor_id');
         } elseif (Auth::user()->hasRole('Vendor')) {
-          //  $projectCount = VendorProjectAssign::select('id', 'vendor_id')->where('vendor_id', Auth::user()->vendor->id)->count();
             $completeProjectCount = Proof::query()->where('vendor_id', Auth::user()->vendor->id)->where('status', 1)->count();
-
             $projectCount->where('vendor_id', Auth::user()->vendor->id);
         }
         $projectCount = $projectCount->selectRaw("
@@ -52,7 +51,6 @@ class DashboardController extends Controller
                 SUM(status = 4) as quality_count
             ")
             ->first();
-          //  dd($projectCount);
-        return view('dashboard', compact('questionsCount', 'languagesCount', 'countriesCount', 'surveysCount','projectCount', 'completeProjectCount', 'totalVendorAssign', 'totalAssignProject'));
+        return view('dashboard', compact('questionsCount', 'languagesCount', 'countriesCount', 'surveysCount','projectCount', 'completeProjectCount', 'totalVendorAssign', 'totalAssignProject', 'suppliers'));
     }
 }

@@ -14,4 +14,10 @@ class Language extends Model
         'short_name',
     ];
 
+    public function scopeForSearch($query, $search)
+    {
+        return $query->where('name', 'like', "%{$search}%")
+            ->orWhere('short_name', 'like', "%{$search}%");
+    }
+
 }

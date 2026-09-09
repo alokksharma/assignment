@@ -20,7 +20,7 @@ class RoleController extends Controller
     {
         $title = 'Roles';
 
-        $roles = Role::with('permissions')->whereNotIN('name', ['SuperAdmin', 'Tenant'])->get();
+        $roles = Role::with('permissions')->whereNotIN('name', ['SuperAdmin'])->get();
 
         return view('masters.roles.index', compact('title', 'roles'));
     }
@@ -87,7 +87,7 @@ class RoleController extends Controller
             'display_name' => 'nullable|min:3|max:255',
         ]);
         $role->update([
-            'name' => $request->role,
+       //     'name' => $request->role,
             'display_name' => $request->display_name
         ]);
         $role->syncPermissions($request->permission);
@@ -100,8 +100,14 @@ class RoleController extends Controller
      * @param  \Illuminate\Http\Request $request
      * @return \Illuminate\Http\Response
      */
-    public function destroy(Request $request)
+    public function destroy(Role $role)
     {
-        return Role::findOrFail($request->id)->delete();
+        if ($role->name === 'SuperAdmin') {
+            return redirect()->route('roles.index')->with('error', 'SuperAdmin role cannot be deleted.');
+        }
+
+        $role->delete();
+
+        return redirect()->route('roles.index')->with('success', 'Role deleted successfully.');
     }
 }

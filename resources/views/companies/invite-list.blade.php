@@ -70,7 +70,7 @@
                                     <th scope="row">{{ $i }}</th>
                                     <td>{{ $user->name }}</td>
                                     <td>{{ $user->email }}</td>
-                                    <td>{{ $user->roles->pluck('name')->join(', ') }}</td>
+                                    <td>{{ $user->roles->pluck('display_name')->join(', ') }}</td>
                                    @canany(['edit-user', 'destroy-user'])
                                         <td>
                                             @can('edit-user')

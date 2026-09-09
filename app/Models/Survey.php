@@ -34,6 +34,11 @@ class Survey extends Model
          return $this->belongsTo(Country::class, 'country_id', 'id');
     }
 
+    public function supplier()
+    {
+         return $this->belongsTo(Project::class, 'api_project_id', 'id');
+    }
+
     public function language()
     {
         return $this->belongsTo(Language::class, 'language_id', 'id');

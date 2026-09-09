@@ -123,11 +123,17 @@
                     </div>
                 </div>
             </div>
-            <div class="col-md-3">
+           <div class="col-md-3">
                 <div class="card">
                     <div class="card-body">
                         <p class="fw-bold mt-1">Sync Questions</p>
-                        <a href="{{route('questions.sync')}}" class="btn btn-primary btn-full text-left mt-3 mb-3"><i class="la la-plus"></i> Add Questions</a>
+
+                        <a href="javascript:void(0);"
+                            data-toggle="modal"
+                            data-target="#syncQuestionModal"
+                            class="btn btn-primary btn-full text-left mt-3 mb-3">
+                            <i class="la la-refresh"></i> Sync Questions
+                        </a>
                     </div>
                 </div>
             </div>
@@ -135,7 +141,13 @@
                 <div class="card">
                     <div class="card-body">
                         <p class="fw-bold mt-1">Sync Surveys</p>
-                        <a href="{{route('surveys.sync')}}" class="btn btn-primary btn-full text-left mt-3 mb-3"><i class="la la-plus"></i> Add Questions</a>
+
+                        <button type="button"
+                            class="btn btn-primary btn-full text-left mt-3 mb-3"
+                            data-toggle="modal"
+                            data-target="#syncSurveyModal">
+                            <i class="la la-refresh"></i> Sync Surveys
+                        </button>
                     </div>
                 </div>
             </div>
@@ -150,8 +162,8 @@
                     </div>
                     <div class="card-footer">
                         <ul class="nav">
-                            <li class="nav-item">{{$totalVendorAssign}} Total Assign Vendor</li>
-                            <li class="nav-item">{{$totalAssignProject}} Total Assign Project</li>
+                            <li class="nav-item">Total Assign Vendor: {{$totalVendorAssign}} </li>
+                            <li class="nav-item"> Total Assign Project: {{$totalAssignProject}}</li>
                         </ul>
                     </div>
                 </div>
@@ -244,7 +256,112 @@
                     </div> --}}
     </div>
 </div>
+<!----- survey sync modal ------>
+<div class="modal fade" id="syncSurveyModal" tabindex="-1" role="dialog"
+    aria-labelledby="syncSurveyModalLabel" aria-hidden="true">
+
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+
+            <div class="modal-header bg-primary">
+                <h6 class="modal-title" id="syncSurveyModalLabel">
+                    <i class="la la-refresh"></i> Sync Surveys
+                </h6>
+
+                <button type="button" class="close" data-dismiss="modal"
+                    aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+             <div class="modal-body text-center">
+                <div class="row mt-2">
+                    @foreach($suppliers as $supplier)
+                    <div class="col-md-3 ml-3">
+                        <form action="{{ route('surveys.sync') }}" method="GET" class="d-inline sync-form">
+                            <input type="hidden" name="supplier_id" value="{{ $supplier->id }}">
+
+                            <button type="submit" class="btn btn-sm btn-success mb-2">
+                                <i class="la la-refresh"></i>
+                                {{ $supplier->name }} - {{ $supplier->code }}
+                            </button>
+                        </form>
+                    </div>
+                    @endforeach
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!----- qualification sync modal ------>
+<div class="modal fade" id="syncQuestionModal" tabindex="-1" role="dialog"
+    aria-labelledby="syncQuestionModalLabel" aria-hidden="true">
+
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+
+            <div class="modal-header bg-primary">
+                <h6 class="modal-title" id="syncQuestionModalLabel">
+                    <i class="la la-refresh"></i> Sync Questions
+                </h6>
+
+                <button type="button" class="close" data-dismiss="modal"
+                    aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+
+            <div class="modal-body text-center">
+                <div class="row mt-2">
+
+                    @foreach($suppliers as $supplier)
+                        <div class="col-md-3 ml-3">
+                            <form action="{{ route('questions.sync') }}"
+                                method="GET"
+                                class="d-inline sync-form">
+
+                                <input type="hidden"
+                                    name="supplier_id"
+                                    value="{{ $supplier->id }}">
+
+                                <button type="submit"
+                                    class="btn btn-sm btn-success mb-2">
+                                    <i class="la la-refresh"></i>
+                                    {{ $supplier->name }} - {{ $supplier->code }}
+                                </button>
+
+                            </form>
+                        </div>
+                    @endforeach
+
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button"
+                    class="btn btn-secondary"
+                    data-dismiss="modal">
+                    Close
+                </button>
+            </div>
+
+        </div>
+    </div>
+</div>
+
 
 @endsection
+@push('scripts')
+<script>
+    $(document).on('submit', '.sync-form', function () {
+        $('#syncLoader').show();
 
+        $(this).find('button[type="submit"]')
+            .prop('disabled', true);
+    });
+</script>
+@endpush
 

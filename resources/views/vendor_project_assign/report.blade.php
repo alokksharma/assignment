@@ -24,7 +24,6 @@
                                     @endforeach
                                 </select>
                             </div>
-
                             <div class="form-group mr-2">
                                 <label for="vpi">Vendor Project ID</label>
                                  <select name="vendor_project_id" id="vpi" class="form-control vendor_list select2">

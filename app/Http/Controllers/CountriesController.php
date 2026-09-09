@@ -10,7 +10,12 @@ class CountriesController extends Controller
 {
     public function index()
     {
-       $countries = Country::query()->with('languages')->paginate(20);
+
+       $countries = Country::query();
+        if ($search = request('q')) {
+            $countries->forSearch($search);
+        }
+        $countries = $countries->orderBy('name')->with('languages')->paginate(20);
         return view('masters.countries', compact('countries'));
     }
 

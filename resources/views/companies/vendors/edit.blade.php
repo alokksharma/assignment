@@ -11,6 +11,7 @@
                         </div>
                           <form method="POST" id="validateSubmitForm" action="{{ route('vendors.update', $user->id) }}">
                                 @csrf
+                                 @method('PUT')
                                 <div class="card-body">
                                     <div class="row">
                                         <div class="col-md-6">
@@ -53,9 +54,9 @@
                                             <div class="form-group">
                                                 <label for="currency">Currency <span>*</span></label>
                                                 <select name="currency" id="currency" class="form-control">
-                                                    <option value="1" {{ old('currency', $user->vendor->currency) == 1 ? 'selected' : '' }}> INR </option>
-                                                    <option value="2" {{ old('currency', $user->vendor->currency) == 2 ? 'selected' : '' }}> USD </option>
-                                                    <option value="3" {{ old('currency', $user->vendor->currency) == 3 ? 'selected' : '' }}> GBP </option>
+                                                    <option value="1" {{ old('currency', $user->vendor?->currency) == 1 ? 'selected' : '' }}> INR </option>
+                                                    <option value="2" {{ old('currency', $user->vendor?->currency) == 2 ? 'selected' : '' }}> USD </option>
+                                                    <option value="3" {{ old('currency', $user->vendor?->currency) == 3 ? 'selected' : '' }}> GBP </option>
                                                 </select>
                                                 @error('currency')
                                                     <span class="text-danger">{{ $message }}</span>
@@ -65,7 +66,7 @@
                                         <div class="col-md-6">
                                             <div class="form-group">
                                                 <label for="complete">Vendor Complete </label>
-                                                <input type="text" name="complete" class="form-control" id="complete" placeholder="Enter Vendor Complete" value="{{ old('complete', $user->vendor->complete) }}">
+                                                <input type="text" name="complete" class="form-control" id="complete" placeholder="Enter Vendor Complete" value="{{ old('complete', $user->vendor?->complete) }}">
                                                 @error('complete')
                                                     <span class="text-danger">{{ $message }}</span>
                                                 @enderror
@@ -74,7 +75,7 @@
                                         <div class="col-md-6">
                                             <div class="form-group">
                                                 <label for="terminate">Vendor Terminate </label>
-                                                <input type="text" name="terminate" class="form-control" id="terminate" placeholder="Enter Vendor Terminate" value="{{ old('terminate', $user->vendor->terminate) }}">
+                                                <input type="text" name="terminate" class="form-control" id="terminate" placeholder="Enter Vendor Terminate" value="{{ old('terminate', $user->vendor?->terminate) }}">
                                                 @error('terminate')
                                                     <span class="text-danger">{{ $message }}</span>
                                                 @enderror
@@ -83,7 +84,7 @@
                                         <div class="col-md-6">
                                             <div class="form-group">
                                                 <label for="quotafull">Vendor Quotafull </label>
-                                                <input type="text" name="quotafull" class="form-control" id="quotafull" placeholder="Enter Vendor Quotafull" value="{{ old('quotafull', $user->vendor->quotafull) }}">
+                                                <input type="text" name="quotafull" class="form-control" id="quotafull" placeholder="Enter Vendor Quotafull" value="{{ old('quotafull', $user->vendor?->quotafull) }}">
                                                 @error('quotafull')
                                                     <span class="text-danger">{{ $message }}</span>
                                                 @enderror
@@ -92,7 +93,7 @@
                                         <div class="col-md-6">
                                             <div class="form-group">
                                                 <label for="speedster">Vendor Speedster </label>
-                                                <input type="text" name="speedster" class="form-control" id="speedster" placeholder="Enter Vendor Speedster" value="{{ old('speedster', $user->vendor->speedster) }}">
+                                                <input type="text" name="speedster" class="form-control" id="speedster" placeholder="Enter Vendor Speedster" value="{{ old('speedster', $user->vendor?->speedster) }}">
                                                 @error('speedster')
                                                     <span class="text-danger">{{ $message }}</span>
                                                 @enderror
@@ -101,7 +102,7 @@
                                         <div class="col-md-6">
                                             <div class="form-group">
                                                 <label for="expired_at">Expired At <span>*</span></label>
-                                                <input type="date" name="expired_at" class="form-control" id="expired_at" placeholder="Enter Vendor Expired Date" value="{{ old('expired_at', $user->vendor->expired_at->format('Y-m-d')) }}">
+                                                <input type="date" name="expired_at" class="form-control" id="expired_at" placeholder="Enter Vendor Expired Date" value="{{ old('expired_at', $user->vendor?->expired_at ? \Carbon\Carbon::parse($user->vendor->expired_at)->format('Y-m-d') : '') }}">
                                                 @error('expired_at')
                                                     <span class="text-danger">{{ $message }}</span>
                                                 @enderror

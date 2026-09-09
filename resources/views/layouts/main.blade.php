@@ -26,115 +26,155 @@
         }
 
 		/* ===== Footer ===== */
-html, body{
-    height:100%;
-}
+        html, body{
+            height:100%;
+        }
 
-.wrapper{
-    min-height:100vh;
-}
+        .wrapper{
+            min-height:100vh;
+        }
 
-.main-panel{
-    min-height:100vh;
-    display:flex;
-    flex-direction:column;
-}
+        .main-panel{
+            min-height:100vh;
+            display:flex;
+            flex-direction:column;
+        }
 
-.main-panel > *:first-child{
-    flex:1;
-}
+        .main-panel > *:first-child{
+            flex:1;
+        }
 
-.footer{
-    background:#ffffff;
-    border-top:1px solid #e5e5e5;
-    padding:15px 25px;
-    margin-top:auto;
-}
+        .footer{
+            background:#ffffff;
+            border-top:1px solid #e5e5e5;
+            padding:15px 25px;
+            margin-top:auto;
+        }
 
-.footer .copyright{
-    text-align:center;
-    color:#6c757d;
-    font-size:14px;
-}
+        .footer .copyright{
+            text-align:center;
+            color:#6c757d;
+            font-size:14px;
+        }
 
-.footer a{
-    color:#0d6efd;
-    font-weight:600;
-    text-decoration:none;
-}
-.footer .text-right {
-    text-align: right !important;
-}
+        .footer a{
+            color:#0d6efd;
+            font-weight:600;
+            text-decoration:none;
+        }
+        .footer .text-right {
+            text-align: right !important;
+        }
 
-.footer a:hover{
-    text-decoration:underline;
-}
+        .footer a:hover{
+            text-decoration:underline;
+        }
 
-		/* ===========================
-   Particle Logo
-=========================== */
+                /* ===========================
+        Particle Logo
+        =========================== */
 
-.logo-header{
-    position:relative;
-}
+        .logo-header{
+            position:relative;
+        }
 
-.particle-logo{
-    position:relative;
-    width:130px;
-    height:55px;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    overflow:hidden;
-    text-decoration:none;
-}
+        .particle-logo{
+            position:relative;
+            width:130px;
+            height:55px;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            overflow:hidden;
+            text-decoration:none;
+        }
 
-#logoCanvas{
-    position:absolute;
-    inset:0;
-    width:100%;
-    height:100%;
-}
+        #logoCanvas{
+            position:absolute;
+            inset:0;
+            width:100%;
+            height:100%;
+        }
 
-.particle-logo span{
-    position:relative;
-    z-index:2;
-    font-size:26px;
-    font-weight:800;
-    letter-spacing:2px;
-    color:#ffffff;
-    text-shadow:
-        0 0 8px #00d4ff,
-        0 0 15px #00d4ff,
-        0 0 30px #00d4ff;
-}
+        .particle-logo span{
+            position:relative;
+            z-index:2;
+            font-size:26px;
+            font-weight:800;
+            letter-spacing:2px;
+            color:#ffffff;
+            text-shadow:
+                0 0 8px #00d4ff,
+                0 0 15px #00d4ff,
+                0 0 30px #00d4ff;
+        }
 
-.project-row a{
-    cursor:pointer;
-    transition:.3s;
-}
+        .project-row a{
+            cursor:pointer;
+            transition:.3s;
+        }
 
-.project-row a:hover{
-    background:#0056b3;
-    text-decoration:none;
-}
+        .project-row a:hover{
+            background:#0056b3;
+            text-decoration:none;
+        }
 
-.toggle-icon{
-    transition:.3s;
-}
+        .toggle-icon{
+            transition:.3s;
+        }
 
-.table-sm td,
-.table-sm th{
-    vertical-align:middle;
-}
+        .table-sm td,
+        .table-sm th{
+            vertical-align:middle;
+        }
 
-.table-warning{
-    background:#fff8dc;
-}
+        .table-warning{
+            background:#fff8dc;
+        }
+        .error{
+            color:#dc3545 !important;
+        }
+
+        .sync-loader-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.75);
+            z-index: 99999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .sync-loader-content {
+            text-align: center;
+            background: #fff;
+            padding: 30px 50px;
+            border-radius: 8px;
+            box-shadow: 0 5px 25px rgba(0, 0, 0, 0.15);
+        }
+
     </style>
+     @stack('css')
 </head>
 <body>
 	<div class="wrapper">
+        <div id="syncLoader" style="display: none;">
+            <div class="sync-loader-overlay">
+                <div class="sync-loader-content">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="sr-only">Loading...</span>
+                    </div>
+
+                    <div class="mt-3 font-weight-bold">
+                        Syncing, please wait...
+                    </div>
+                </div>
+            </div>
+        </div>
+
 		<div class="main-header">
 			<div class="logo-header">
 				<a href="#" class="logo particle-logo">
@@ -210,20 +250,20 @@ html, body{
                 @yield('content')
 
 				<footer class="footer">
-    <div class="container-fluid">
-        <div class="row align-items-center">
+                    <div class="container-fluid">
+                        <div class="row align-items-center">
 
-            <!-- Left -->
-            <div class="col-md-12 text-left">
-                © {{ date('Y') }}
-               <a href="https://3asresearchsolutions.in" target="_blank"> <strong>3AS Research Pvt. Ltd.</strong></a> | Growing Through Insights
-                &nbsp;|&nbsp;
-                API Portal v1.0
-            </div>
+                            <!-- Left -->
+                            <div class="col-md-12 text-left">
+                                © {{ date('Y') }}
+                            <a href="https://3asresearchsolutions.in" target="_blank"> <strong>3AS Research Pvt. Ltd.</strong></a> | Growing Through Insights
+                                &nbsp;|&nbsp;
+                                API Portal v1.0
+                            </div>
 
-        </div>
-    </div>
-</footer>
+                        </div>
+                    </div>
+                </footer>
 
             </div>
             <!-- Modal -->

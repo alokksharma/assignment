@@ -22,6 +22,18 @@
                                         <option value="Test" {{ request('survey_status') == 'Test' ? 'selected' : '' }}>Test</option>
                                     </select>
                                 </div>
+                                <div class="form-group mr-2">
+                                    <label for="supplier_id" class="pr-3 font-weight-bold">Supplier</label>
+                                    <select name="supplier_id" id="supplier_id" class="form-control vendor_list select2">
+                                        <option value="">All Suppliers</option>
+                                        @foreach($suppliers as $supplier)
+                                            <option value="{{ $supplier->id }}"
+                                                {{ request('supplier_id') == $supplier->id ? 'selected' : '' }}>
+                                                {{ $supplier->name }} - {{ $supplier->code }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                </div>
                                 <button type="submit" class="btn btn-light btn-sm mr-2">
                                     <i class="fa fa-search">Filter</i>
                                 </button>
@@ -82,7 +94,7 @@
                                     @endphp
                                 <tr>
                                     <th scope="row">{{ $i }}</th>
-                                    <td>{{ $survey->project_id }}</td>
+                                    <td>{{ ($survey->supplier?->code ?? 'mx').''.$survey->project_id }}</td>
                                     <td>{{ $survey->project_name }}</td>
                                     <td>{{ $survey->project_code }}</td>
                                     <td>{{ $survey->country?->name }}</td>
@@ -124,7 +136,7 @@
                                 </tr>
                                 @empty
                                     <tr>
-                                        <td colspan="6" class="text-center">No records found.</td>
+                                        <td colspan="26" class="text-center">No records found.</td>
                                     </tr>
                                 @endforelse
                                     {{-- pagination --}}

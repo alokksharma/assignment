@@ -10,7 +10,11 @@ class LanguageController extends Controller
 {
     public function index()
     {
-       $languages = Language::query()->paginate(20);
+       $languages = Language::query();
+        if ($search = request('q')) {
+            $languages->forSearch($search);
+        }
+        $languages = $languages->orderBy('name')->paginate(20);
 
         return view('masters.languages', compact('languages'));
     }

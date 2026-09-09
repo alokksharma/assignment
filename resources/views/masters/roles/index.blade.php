@@ -18,6 +18,14 @@
                     </div>
 
                     <div class="card-body">
+                        @if (session('success'))
+                            <div class="alert alert-success">{{ session('success') }}</div>
+                        @endif
+
+                        @if (session('error'))
+                            <div class="alert alert-danger">{{ session('error') }}</div>
+                        @endif
+
                         <div class="table-responsive">
                             <table class="table table-striped table-bordered table-hover">
                                 <thead>
@@ -58,7 +66,7 @@
                                                 @endcan
 
                                                 @can('destroy-role')
-                                                    <form action="{{ route('roles.destroy', $role->id) }}"
+                                                    {{-- <form action="{{ route('roles.destroy', $role->id) }}"
                                                         method="POST"
                                                         class="d-inline"
                                                         onsubmit="return confirm('Are you sure you want to delete this role?')">
@@ -69,7 +77,7 @@
                                                                 class="btn btn-danger btn-sm">
                                                             <i class="la la-trash"></i>
                                                         </button>
-                                                    </form>
+                                                    </form> --}}
                                                 @endcan
                                             </td>
                                         </tr>

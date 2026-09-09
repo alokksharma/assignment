@@ -19,4 +19,9 @@ class Question extends Model
     {
         return $this->belongsTo(SurveyQuestionOption::class, 'question_id', 'question_id');
     }
+
+    public function scopeForSearch($query, $search)
+    {
+        return $query->where('question', 'like', "%{$search}%");
+    }
 }

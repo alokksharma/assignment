@@ -16,6 +16,11 @@ class Proof extends Model
         return $this->belongsTo(Vendor::class, 'vendor_id');
     }
 
+    public function supplier()
+    {
+        return $this->belongsTo(Partner::class, 'supplier_id');
+    }
+
     public function vendorProjectAssign()
     {
         return $this->belongsTo(

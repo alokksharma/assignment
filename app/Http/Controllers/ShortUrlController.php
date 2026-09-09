@@ -11,6 +11,7 @@ use App\Traits\CompanyTrait;
 use Illuminate\Support\Facades\Validator;
 use App\Models\VendorProjectAssign;
 use App\Models\Country;
+use App\Models\Partner;
 use App\Models\Proof;
 use App\Models\Survey;
 use Illuminate\Support\Facades\Http;
@@ -134,12 +135,16 @@ class ShortUrlController extends Controller
                     $url = str_replace('[identifier]', $send_able_link_hash_short, $survey->live_url);
 		      	    $url = $url. "&3ASPID=" . request()->input('3ASPID') ."&ccode=" . $send_able_link_hash_short . "&link=" . request()->link;
                 }
-
+                  $partner = null;
+                if($request->supplier){
+                    $partner = Partner::where('supplier_id', $request->supplier)->first();
+                }
                 //Entering the data into the Database
                 $data = [
                     '3ASProjectID' =>  $request->input('3ASPID'),
                     'ClientProjectID' =>  $survey->project_id,
                     'ccode' =>  $request->input('ccode'),
+                    'supplier_id' =>  $partner?->id,
                     'encode' =>  $encode,
                     'vendor_id' =>  $request->input('VendorID') ?  $vendorProjet?->vendor_id : null,
                     'link' =>  $request->input('link'),
@@ -193,8 +198,7 @@ class ShortUrlController extends Controller
             'status'     => ['required'],
         ]);
 
-
-        $proof = Proof::query()->with(['vendorProjectAssign','vendor'])->where('asr_hash_short', $request->input('ccode'))->latest()->first();
+        $proof = Proof::query()->with(['vendorProjectAssign','vendor', 'supplier'])->where('asr_hash_short', $request->input('ccode'))->latest()->first();
         if ($proof) {
             if ($proof->clientsurveystatus != "Live")
             {
@@ -219,8 +223,23 @@ class ShortUrlController extends Controller
                     $url = str_replace('[#ccode#]', $proof->ccode, $url);
                     return redirect()->away($url);
 
-            }else{
-               return match ($proof->status) {
+            } elseif ($proof->supplier){
+                $url = match ($proof->status) {
+                    1 =>  $proof->supplier?->complete_redirect,
+                    2 =>  $proof->supplier?->terminate_redirect,
+                    3 =>  $proof->supplier?->quotafull_redirect,
+                    4 =>  $proof->supplier?->quality_redirect,
+                    default =>null,
+                };
+
+                if (! $url) {
+                    return 'Unknown project status.';
+                }
+                    $url = str_replace('[#ccode#]', $proof->ccode, $url);
+                    return redirect()->away($url);
+
+            } else {
+                return match ($proof->status) {
                     1 => 'The project is complete.',
                     2 => 'The project is terminated.',
                     3 => 'The project is quota full.',
@@ -292,5 +311,8 @@ class ShortUrlController extends Controller
         return view('short_urls.index', compact('shortUrls'));
     }
 
-
+    public function iframe()
+    {
+        return view('vendor_project_assign.urlredirect');
+    }
 }

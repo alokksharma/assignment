@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use App\Models\Invite;
+use App\Models\Partner;
 use App\Traits\CompanyTrait;
 use Illuminate\Http\Request;
 use Spatie\Permission\Models\Role;
@@ -21,7 +22,7 @@ class InviteAdminController extends Controller
     public function create()
     {
         // Allow inviting Admin or Member
-        $roles = Role::query()->whereNotIN('name', ['SuperAdmin', 'Vendor', 'Tennat'])->get();
+        $roles = Role::query()->whereNotIN('name', ['SuperAdmin', 'Vendor', 'Partner'])->get();
         return view('companies.invite-admin', compact('roles'));
     }
 
@@ -42,6 +43,13 @@ class InviteAdminController extends Controller
             'password' => Hash::make('12345678'),
 
         ]);
+        // if($request->role === "Member"){
+        //      $vendor = $user->partner()->create([
+        //         'user_id' => $user->id,
+        //         'is_active' => 1,
+        //     ]);
+
+        // }
         $user->assignRole($request->role); // Assign the role based on the request
         $role = $request->role;
 
@@ -51,7 +59,7 @@ class InviteAdminController extends Controller
     public function edit($id)
     {
         $user = User::findOrFail($id);
-       $roles = Role::query()->whereNotIN('name', ['SuperAdmin', 'Vendor', 'Tennat'])->get();
+       $roles = Role::query()->whereNotIN('name', ['SuperAdmin', 'Vendor', 'Partner'])->get();
         return view('companies.edit', compact('user', 'roles'));
     }
 
@@ -75,7 +83,12 @@ class InviteAdminController extends Controller
             'contact' => $request->contact,
             'role' => $request->role,
         ]);
-
+        //  if($request->role === "Member"){
+        //      $member = $user->partner()->update([
+        //         'user_id' => $user->id,
+        //         'is_active' => 1,
+        //     ]);
+        // }
         return redirect()
             ->route('companies.invite-list')
             ->with('success', 'User updated successfully.');
@@ -83,7 +96,7 @@ class InviteAdminController extends Controller
 
     public function index(Request $request)
     {
-        $roles = Role::query()->whereNotIN('name', ['SuperAdmin', 'Vendor', 'Tenant'])->get();
+        $roles = Role::query()->whereNotIN('name', ['SuperAdmin', 'Vendor', 'Partner'])->get();
         $users = User::query()
                         ->search(request('q'))
                         ->when($request->role, function ($query, $role) {
@@ -91,7 +104,7 @@ class InviteAdminController extends Controller
                                 $q->where('name', $role);
                             });
                         })->whereHas('roles', function ($q) use ($roles) {
-                                $q->whereNotIn('name', ['SuperAdmin', 'Vendor', 'Tenant']);
+                                $q->whereNotIn('name', ['SuperAdmin', 'Vendor', 'Partner']);
                             })
                         ->paginate(10);
         return view('companies.invite-list', compact('users', 'roles'));

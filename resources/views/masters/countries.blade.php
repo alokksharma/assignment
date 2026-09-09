@@ -6,16 +6,30 @@
         <div class="row">
             <div class="col-md-12">
                 <div class="card">
+                    @if (session('success'))
+                        <div class="alert alert-success">
+                            {{ session('success') }}
+                        </div>
+                    @endif
                     <div class="card-header">
                         <div class="card-title d-flex justify-content-between align-items-center">
                             <span>Country List</span>
                         </div>
-
-                            @if (session('success'))
-                            <div class="alert alert-success">
-                                {{ session('success') }}
+                        <form id="searchForm"  action="{{ route('countries') }}" method="GET" class="form-inline">
+                            <div class="form-group mr-2">
+                                    <label for="search" class="pr-3 font-weight-bold">Search</label>
+                                <input type="text" name="q" class="form-control me-2" placeholder="Search users..." value="{{ request('q') }}">
                             </div>
-                        @endif
+                            <button type="submit" class="btn btn-light btn-sm mr-2">
+                                <i class="fa fa-search">Filter</i>
+                            </button>
+                            @if(request('q'))
+                                <a href="{{ route('countries') }}" class="btn btn-secondary ms-2">
+                                    Reset
+                                </a>
+                            @endif
+
+                        </form>
                     </div>
 
                     <div class="table-responsive">
@@ -56,7 +70,7 @@
                                     {{-- pagination --}}
                                     @if ($countries->hasPages())
                                             <tr>
-                                        <td colspan="4" class="text-center">
+                                        <td colspan="6" class="text-center">
                                             <div class="d-flex justify-content-center">
                                                 {{ $countries->appends(request()->query())->links('pagination::bootstrap-4') }}
                                             </div>
