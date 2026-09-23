@@ -95,7 +95,7 @@
                                 <div class="col-7 d-flex align-items-center">
                                     <div class="numbers">
                                         <p class="card-category">All Project Assigned</p>
-                                        <h4 class="card-title">{{$projectCount->total_count}}</h4>
+                                        <h4 class="card-title">{{$totalAssignProject}}</h4>
                                     </div>
                                 </div>
                             </div>
@@ -162,7 +162,9 @@
                     </div>
                     <div class="card-footer">
                         <ul class="nav">
+                             @if (auth()->user()->hasRole('Admin') || auth()->user()->hasRole('SuperAdmin'))
                             <li class="nav-item">Total Assign Vendor: {{$totalVendorAssign}} </li>
+                            @endif
                             <li class="nav-item"> Total Assign Project: {{$totalAssignProject}}</li>
                         </ul>
                     </div>
@@ -205,6 +207,15 @@
                             </div>
                             <div class="progress mb-2" style="height: 7px;">
                                 <div class="progress-bar bg-warning" role="progressbar" style="width: {{\App\Models\Proof::projectPercentage($projectCount->total_count, $projectCount->quality_count)}}%" aria-valuenow="60" aria-valuemin="0" aria-valuemax="100" data-toggle="tooltip" data-placement="top" title="{{\App\Models\Proof::projectPercentage($projectCount->total_count, $projectCount->quality_count)}}%"></div>
+                            </div>
+                        </div>
+                        <div class="progress-card">
+                            <div class="d-flex justify-content-between mb-1">
+                                <span class="text-muted">Pending</span>
+                                <span class="text-muted fw-bold">{{$projectCount->in_progress_count}}</span>
+                            </div>
+                            <div class="progress mb-2" style="height: 7px;">
+                                <div class="progress-bar bg-danger" role="progressbar" style="width: {{\App\Models\Proof::projectPercentage($projectCount->total_count, $projectCount->in_progress_count)}}%" aria-valuenow="60" aria-valuemin="0" aria-valuemax="100" data-toggle="tooltip" data-placement="top" title="{{\App\Models\Proof::projectPercentage($projectCount->total_count, $projectCount->in_progress_count)}}%"></div>
                             </div>
                         </div>
                     </div>

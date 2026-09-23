@@ -19,8 +19,11 @@
                                             <div class="col-md-6">
                                                 <div class="form-group">
                                                     <label for="vendor_list">Vendor List <span>*</span></label>
-                                                    <select name="vendor_id" id="vendor_list" class="form-control">
+                                                    <select name="vendor_id"  class="form-control">
                                                         <option value="">Select Vendor</option>
+                                                        @foreach ($vendors as $vendor)
+                                                             <option value="{{$vendor->id}}">{{$vendor->vendor_id}}</option>
+                                                        @endforeach
                                                     </select>
                                                     @error('vendor_id')
                                                         <span class="text-danger">{{ $message }}</span>
@@ -93,45 +96,45 @@
     <script src="{{asset("js/validate.js") }}"></script>
 <script>
 
-    $(document).ready(function () {
+    // $(document).ready(function () {
 
-        $('#vendor_list').select2({
-            placeholder: 'Select Vendor',
-            allowClear: true,
-            width: '100%',
+    //     $('#vendor_list').select2({
+    //         placeholder: 'Select Vendor',
+    //         allowClear: true,
+    //         width: '100%',
 
-            ajax: {
-                url: "{{ route('vendors.search') }}",
-                type: "GET",
-                dataType: 'json',
-                delay: 250,
+    //         ajax: {
+    //             url: "{{ route('vendors.search') }}",
+    //             type: "GET",
+    //             dataType: 'json',
+    //             delay: 250,
 
-                data: function (params) {
-                    return {
-                        search: params.term || '',
-                        survey_id: "{{ $id }}",
-                        page: params.page || 1
-                    };
-                },
+    //             data: function (params) {
+    //                 return {
+    //                     search: params.term || '',
+    //                     survey_id: "{{ $id }}",
+    //                     page: params.page || 1
+    //                 };
+    //             },
 
-                processResults: function (data, params) {
+    //             processResults: function (data, params) {
 
-                    params.page = params.page || 1;
+    //                 params.page = params.page || 1;
 
-                    return {
-                        results: data.results,
+    //                 return {
+    //                     results: data.results,
 
-                        pagination: {
-                            more: data.pagination.more
-                        }
-                    };
-                },
+    //                     pagination: {
+    //                         more: data.pagination.more
+    //                     }
+    //                 };
+    //             },
 
-                cache: true
-            }
-        });
+    //             cache: true
+    //         }
+    //     });
 
-    });
+    // });
 
 
     $.validator.addMethod("checkIfEmpty", function(value, element) {

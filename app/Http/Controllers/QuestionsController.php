@@ -11,8 +11,15 @@ class QuestionsController extends Controller
 {
     public function index()
     {
-       $questions = Question::query()->paginate(20);
-        return view('masters.questions', compact('questions'));
+        $questions = Question::query()
+            ->when(request('supplier_id'), function ($query, $supplierId) {
+                $query->where('project_id', $supplierId);
+            })
+            ->paginate(20);
+
+        $suppliers = Project::where('status', 1)->get();
+
+        return view('masters.questions', compact('questions', 'suppliers'));
     }
 
     public function syncQuestions(Request $request)

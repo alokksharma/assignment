@@ -16,15 +16,16 @@ class ReportController extends Controller
 
         $survey_id =  (int) last(explode('-', $request->input('search')));
         $threeAsProjects = Proof::query()
-                            ->when(Auth::user()->role === 'vendor', function ($query) {
-                                $query->where('vendor_id', Auth::user()->vendor_id);
+                            ->when(Auth::user()->hasRole('Vendor'), function ($query) {
+                                $query->where('vendor_id', Auth::user()->vendor->id);
                             })
+                            ->where('status', '!=', 0)
                             ->select('3ASProjectID')
                             ->distinct()
                             ->get();
         $vendorProjects  = VendorProjectAssign::query()
-                ->when(Auth::user()->role === 'vendor', function ($query) {
-                    $query->where('vendor_id', Auth::user()->vendor_id);
+                ->when(Auth::user()->hasRole('Vendor'), function ($query) {
+                    $query->where('vendor_id', Auth::user()->vendor->id);
                 })->get();
 
        if (!$request->hasAny([
@@ -37,10 +38,12 @@ class ReportController extends Controller
         } else {
             $selectedProjectId = $request->three_as_project_id;
         }
+
        $proofs = Proof::query()
-                ->when(Auth::user()->role === 'vendor', function ($query) {
-                    $query->where('vendor_id', Auth::user()->vendor_id);
+                ->when(Auth::user()->hasRole('Vendor'), function ($query) {
+                    $query->where('vendor_id', Auth::user()->vendor->id);
                 })
+            ->where('status', '!=', 0)
             ->selectRaw("
                 `3ASProjectID`,
                 SUM(status = 1) as complete,

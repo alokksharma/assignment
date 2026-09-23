@@ -66,18 +66,23 @@
                                                 @endcan
 
                                                 @can('destroy-role')
-                                                    {{-- <form action="{{ route('roles.destroy', $role->id) }}"
-                                                        method="POST"
-                                                        class="d-inline"
-                                                        onsubmit="return confirm('Are you sure you want to delete this role?')">
-                                                        @csrf
-                                                        @method('DELETE')
+                                                    @php
+                                                        $protectedRoles = ['Admin', 'Vendor', 'Member', 'Partner'];
+                                                    @endphp
+                                                    @if (!in_array($role->name, $protectedRoles))
+                                                        <form action="{{ route('roles.destroy', $role->id) }}"
+                                                            method="POST"
+                                                            class="d-inline"
+                                                            onsubmit="return confirm('Are you sure you want to delete this role?')">
+                                                            @csrf
+                                                            @method('DELETE')
 
-                                                        <button type="submit"
-                                                                class="btn btn-danger btn-sm">
-                                                            <i class="la la-trash"></i>
-                                                        </button>
-                                                    </form> --}}
+                                                            <button type="submit"
+                                                                    class="btn btn-danger btn-sm">
+                                                                <i class="la la-trash"></i>
+                                                            </button>
+                                                        </form>
+                                                    @endif
                                                 @endcan
                                             </td>
                                         </tr>

@@ -8,7 +8,7 @@
                     <div class="col-md-12">
                         <div class="card">
                             <div class="card-header">
-                                <div class="card-title">Supplier</div>
+                                <div class="card-title">Client</div>
                             </div>
 
                             <form method="POST" id="validateSubmitForm" action="{{ route('suppliers.store') }}">

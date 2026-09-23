@@ -26,6 +26,7 @@ class DashboardController extends Controller
         $totalVendorAssign = 0;
         $totalAssignProject = 0;
         $projectCount = Proof::query();
+        $vendorProjectAssignQuery = VendorProjectAssign::query();
         $suppliers = Project::where('status', 1)->get();
         if (Auth::user()->hasRole('SuperAdmin') || Auth::user()->hasRole('Admin')) {
             $languagesCount = Language::query()->count();
@@ -37,14 +38,17 @@ class DashboardController extends Controller
                                 SUM(status = 'Pause') as pause,
                                 SUM(status = 'Test') as test
                             ")->first();
-            $totalAssignProject = VendorProjectAssign::query()->count();
             $totalVendorAssign = VendorProjectAssign::query()->distinct('vendor_id')->count('vendor_id');
         } elseif (Auth::user()->hasRole('Vendor')) {
             $completeProjectCount = Proof::query()->where('vendor_id', Auth::user()->vendor->id)->where('status', 1)->count();
             $projectCount->where('vendor_id', Auth::user()->vendor->id);
+            $vendorProjectAssignQuery = $vendorProjectAssignQuery->where('vendor_id', Auth::user()->vendor->id);
         }
+        $totalAssignProject = $vendorProjectAssignQuery->count();
+
         $projectCount = $projectCount->selectRaw("
                 COUNT(*) as total_count,
+                SUM(status = 0) as in_progress_count,
                 SUM(status = 1) as complete_count,
                 SUM(status = 2) as terminate_count,
                 SUM(status = 3) as quotafull_count,

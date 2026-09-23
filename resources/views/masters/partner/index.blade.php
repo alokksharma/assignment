@@ -2,7 +2,7 @@
 @section('content')
 <div class="content">
     <div class="container-fluid">
-        <h4 class="page-title">Partners</h4>
+        <h4 class="page-title">API Partners</h4>
         <div class="row">
             <div class="col-md-12">
                 <div class="card">
@@ -11,8 +11,8 @@
                     @endif
 
                     <div class="card-header d-flex justify-content-between align-items-center">
-                        <div>Partner List</div>
-                        <a href="{{ route('partners.create') }}" class="btn btn-primary">Create Partner</a>
+                        <div>API Dashboard List</div>
+                        <a href="{{ route('partners.create') }}" class="btn btn-primary">Create API Partner</a>
                     </div>
 
                     <div class="table-responsive">
@@ -34,7 +34,7 @@
                                     <td>{{ $user->email }}</td>
                                     <td>{{ $user->contact }}</td>
                                     <td>
-                                        <a href="{{ route('partners.show', $user->id) }}" class="btn btn-sm btn-info">Details</a>
+                                        <a href="{{ route('partners.show', $user->id) }}" class="btn btn-sm btn-info">API Details</a>
                                         <a href="{{ route('partners.edit', $user->id) }}" class="btn btn-sm btn-warning">Edit</a>
                                         <form action="{{ route('partners.destroy', $user->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Are you sure?')">
                                             @csrf

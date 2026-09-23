@@ -36,6 +36,7 @@ class SurveController extends Controller
             'language:id,name',
             'supplier',
         ])
+        ->orderBy('created_at', 'desc')
         ->paginate(20);
         $suppliers = Project::where('status', 1)->get();
         return view('masters.surveys', compact('surveys', 'suppliers'));
@@ -56,6 +57,7 @@ class SurveController extends Controller
             'country:id,name',
             'language:id,name',
         ])
+        ->orderBy('created_at', 'desc')
         ->paginate(20);
         $suppliers = Project::get();
         return view('masters.survey_project', compact('surveys','suppliers'));
@@ -83,7 +85,7 @@ class SurveController extends Controller
             }
             $allRows = collect($response->json('Data'));
             $requestCount = $allRows->count();
-
+            $apiProjectIds = collect($allRows)->pluck('project_id')->filter()->unique();
             // --- pagination on the already-fetched collection ---
             $perPage    = (int) $request->input('per_page', 100);
             $page       = (int) $request->input('page', 1);
@@ -96,10 +98,9 @@ class SurveController extends Controller
                 ['path' => $request->url(), 'query' => $request->query()]
             );
             $rows = collect($paginatedRows->items());
-            $apiProjectIds = collect($rows)
-                        ->pluck('project_id')
-                        ->filter()
-                        ->unique();
+            // dd($apiProjectIds, $rows, Survey::where('api_project_id', $apiProjectPk)->get());
+
+
             $countries = Country::pluck('id', 'name');
             $languages = Language::pluck('id', 'name');
             $rows->chunk(50)->each(function ($chunk) use ($supplier, $apiProjectPk, $countries, $languages){
@@ -110,7 +111,6 @@ class SurveController extends Controller
                             'api_project_id' =>  $apiProjectPk,
                         ],
                         [
-                            'api_project_id' =>  $apiProjectPk,
                             'project_code'         => $item['project_code'],
                             'project_name'         => $item['project_name'],
                             'country_id'           => $countries[$item['country'] ?? ''] ?? null,
@@ -125,8 +125,8 @@ class SurveController extends Controller
                             'project_loi'          => $item['project_loi'],
                             'cpi'                  => $item['cpi'],
                             'quota'                => $item['quota'],
-                            'live_click_quota'     => $item['live_click_quota'] ?? $item['live_quota'],
-                            'test_click_quota'     => $item['test_click_quota'] ??  $item['test_quota'],
+                            'live_click_quota'     => $item['live_click_quota'] ?? $item['live_quota'] ?? 0,
+                            'test_click_quota'     => $item['test_click_quota'] ??  $item['test_quota'] ?? 0,
                             'project_start_date'   => $item['project_start_date'],
                             'project_end_date'     => $item['project_end_date'],
                             'live_url'             => $item['live_url'],
@@ -139,56 +139,163 @@ class SurveController extends Controller
                     );
                     $data = $item['qualifications'] ?? [];
                     // No questions available
-                    if (empty($data['question'])) {
-                        return;
+                        if (!empty($data['question']) && is_array($data['question'])) {
+                            foreach ($data['question'] as $questionId) {
+                                $surveyQuestion = SurveyQuestion::updateOrCreate(
+                                    [
+                                        'survey_id'   => $survey->id,
+                                        'question_id' => $questionId,
+                                    ]
+                                );
+                                $optionsData = $data['option'][$questionId] ?? [];
+                                // Delete options that are no longer available
+                                if (!empty($optionsData)) {
+                                    SurveyQuestionOption::where(
+                                        'question_id',
+                                        $questionId
+                                    )
+                                    ->whereNotIn('option', $optionsData)
+                                    ->delete();
+
+                                } else {
+                                    // Remove all old options if no options exist
+                                    SurveyQuestionOption::where(
+                                        'question_id',
+                                        $questionId
+                                    )->delete();
+
+                                    continue;
+                                }
+
+                                $options = [];
+                                foreach ($optionsData as $optionCode) {
+                                    $options[] = [
+                                        'question_id'        => $questionId,
+                                        'option'        => $optionCode,
+                                        'option_text'        => $data['option_text'][$questionId][$optionCode] ?? '',
+                                        'option_quota'       => $data['option_quota'][$questionId][$optionCode] ?? 0,
+                                    ];
+                                }
+
+                                if (!empty($options)) {
+                                    SurveyQuestionOption::upsert(
+                                        $options,
+                                        ['question_id', 'option'],
+                                        ['option_text', 'option_quota']
+                                    );
+                                }
+                            }
+                        } elseif (!empty($data) && is_array($data)) {
+                            foreach ($data as $qua) {
+                                $questionId = isset($qua['question_id']) ? (string)$qua['question_id'] : null;
+                                if ($questionId === null) {
+                                    continue;
+                                }
+
+                                $surveyQuestion = SurveyQuestion::updateOrCreate(
+                                    ['survey_id' => $survey->id, 'question_id' => $questionId]
+                                );
+
+                                $optionsData = [];
+                                $optionTextMap = [];
+                                $optionQuotaMap = [];
+
+                                // range control (control_type = 6)
+                                if (isset($qua['control_type']) && (int)$qua['control_type'] === 6) {
+                                    if (!empty($qua['range']) && is_array($qua['range'])) {
+                                        foreach ($qua['range'] as $r) {
+                                            if (isset($r['range'])) {
+                                                $optionsData[] = (string)$r['range'];
+                                            }
+                                        }
+                                    }
+                                    foreach ($qua['quota'] ?? [] as $q) {
+                                        if (isset($q['range'])) {
+                                            $optionQuotaMap[(string)$q['range']] = (int)($q['quota'] ?? 0);
+                                        }
+                                    }
+                                } else {
+                                    // normal options shape: [{"option":1}, ...] or keyed by question id
+                                    if (isset($qua['option'][$questionId]) && is_array($qua['option'][$questionId])) {
+                                        $optionsData = array_map('strval', $qua['option'][$questionId]);
+                                        $optionTextMap = $qua['option_text'][$questionId] ?? [];
+                                        $optionQuotaMap = $qua['option_quota'][$questionId] ?? [];
+                                    } elseif (!empty($qua['option']) && is_array($qua['option'])) {
+                                        foreach ($qua['option'] as $o) {
+                                            if (is_array($o) && isset($o['option'])) {
+                                                $optionsData[] = (string)$o['option'];
+                                            } elseif (!is_array($o)) {
+                                                $optionsData[] = (string)$o;
+                                            }
+                                        }
+                                        foreach ($qua['quota'] ?? [] as $q) {
+                                            if (isset($q['option'])) {
+                                                $optionQuotaMap[(string)$q['option']] = (int)($q['quota'] ?? 0);
+                                            }
+                                        }
+                                    }
+                                }
+
+                                if (!empty($optionsData)) {
+                                    SurveyQuestionOption::where('question_id', $questionId)
+                                        ->whereNotIn('option', $optionsData)
+                                        ->delete();
+                                } else {
+                                    SurveyQuestionOption::where('question_id', $questionId)->delete();
+                                }
+
+                                $options = [];
+                                foreach ($optionsData as $opt) {
+                                    $options[] = [
+                                        'question_id' => $questionId,
+                                        'option' => $opt,
+                                        'option_text' => $optionTextMap[$opt] ?? '',
+                                        'option_quota' => $optionQuotaMap[$opt] ?? 0,
+                                    ];
+                                }
+
+                                if (!empty($options)) {
+                                    SurveyQuestionOption::upsert($options, ['question_id', 'option'], ['option_text', 'option_quota']);
+                                }
+                            }
+                        }
+                        /* elseif (!empty($data['question']) && is_array($data['question'])) {
+                            // fallback: existing keyed-by-question-id shape
+                            foreach ($data['question'] as $questionId) {
+                                $surveyQuestion = SurveyQuestion::updateOrCreate(
+                                    ['survey_id' => $survey->id, 'question_id' => $questionId]
+                                );
+
+                                $optionsData = $data['option'][$questionId] ?? [];
+                                $optionTextMap = $data['option_text'][$questionId] ?? [];
+                                $optionQuotaMap = $data['option_quota'][$questionId] ?? [];
+
+                                if (!empty($optionsData)) {
+                                    SurveyQuestionOption::where('question_id', $questionId)
+                                        ->whereNotIn('option', $optionsData)
+                                        ->delete();
+                                } else {
+                                    SurveyQuestionOption::where('question_id', $questionId)->delete();
+                                    continue;
+                                }
+
+                                $options = [];
+                                foreach ($optionsData as $optionCode) {
+                                    $options[] = [
+                                        'question_id' => $questionId,
+                                        'option' => $optionCode,
+                                        'option_text' => $optionTextMap[$optionCode] ?? '',
+                                        'option_quota' => $optionQuotaMap[$optionCode] ?? 0,
+                                    ];
+                                }
+
+                                if (!empty($options)) {
+                                    SurveyQuestionOption::upsert($options, ['question_id', 'option'], ['option_text', 'option_quota']);
+                                }
+                            }
+                        } */
+
                     }
-
-                    foreach ($data['question'] as $questionId) {
-                        $surveyQuestion = SurveyQuestion::updateOrCreate(
-                            [
-                                'survey_id'   => $survey->id,
-                                'question_id' => $questionId,
-                            ]
-                        );
-                        $optionsData = $data['option'][$questionId] ?? [];
-                        // Delete options that are no longer available
-                        if (!empty($optionsData)) {
-                            SurveyQuestionOption::where(
-                                'question_id',
-                                $questionId
-                            )
-                            ->whereNotIn('option', $optionsData)
-                            ->delete();
-
-                        } else {
-                            // Remove all old options if no options exist
-                            SurveyQuestionOption::where(
-                                'question_id',
-                                $questionId
-                            )->delete();
-
-                            continue;
-                        }
-
-                        $options = [];
-                        foreach ($optionsData as $optionCode) {
-                            $options[] = [
-                                'question_id'        => $questionId,
-                                'option'        => $optionCode,
-                                'option_text'        => $data['option_text'][$questionId][$optionCode] ?? '',
-                                'option_quota'       => $data['option_quota'][$questionId][$optionCode] ?? 0,
-                            ];
-                        }
-
-                        if (!empty($options)) {
-                            SurveyQuestionOption::upsert(
-                                $options,
-                                ['question_id', 'option'],
-                                ['option_text', 'option_quota']
-                            );
-                        }
-                    }
-                }
             });
             Survey::whereNotIn('project_id', $apiProjectIds->all())
                         ->where('api_project_id', $request->supplier_id)
@@ -214,11 +321,20 @@ class SurveController extends Controller
 
     }
 
-    public function vendorProjectAssign($id)
+    public function vendorProjectAssign(Request $request, $id)
     {
-        // $assignedVendorIds = VendorProjectAssign::where('survey_id', $id)->pluck('vendor_id');
-        // $vendors = Vendor::query()->whereNotIn('id', $assignedVendorIds)->take(10)->get();
-         return view('masters.vendor-project-assign', compact('id'));
+        $assignedVendorIds = VendorProjectAssign::where('survey_id', $id)->pluck('vendor_id');
+        $vendors = Vendor::query()
+            ->whereNotIn('id', $assignedVendorIds)
+           ->when(Auth::user()->hasRole('Vendor'), function ($query) {
+                $query->where('vendor_id', Auth::user()->vendor->vendor_id);
+            })
+            ->when($request->search, function ($query) use ($request) {
+                $query->where('vendor_id', 'like', '%' . $request->search . '%');
+            })
+            ->orderBy('created_at', 'desc')
+            ->get();
+         return view('masters.vendor-project-assign', compact('id','vendors'));
     }
 
     public function searchVendors(Request $request)
@@ -231,7 +347,7 @@ class SurveController extends Controller
         $vendors = Vendor::query()
             ->whereNotIn('id', $assignedVendorIds)
            ->when(Auth::user()->role === 'vendor', function ($query) {
-                $query->where('vendor_id', Auth::user()->vendor_id);
+                $query->where('vendor_id', Auth::user()->vendor->vendor_id);
             })
             ->when($request->search, function ($query) use ($request) {
                 $query->where('vendor_id', 'like', '%' . $request->search . '%');
@@ -254,14 +370,23 @@ class SurveController extends Controller
 
     public function vendorProjectAssignList()
     {
-        $vendor_projects = VendorProjectAssign::query()->search(request('q'));
+        $supplierId = request('supplier_id');
+        $vendor_projects = VendorProjectAssign::query()
+            ->search(request('q'))
+            ->when($supplierId, function ($query, $supplierId) {
+                $query->whereHas('survey', function ($subQuery) use ($supplierId) {
+                    $subQuery->where('api_project_id', $supplierId);
+                });
+            });
 
-        if(Auth::user()->hasRole('Vendor')){
-             $vendor_projects->where('vendor_id', Auth::user()->vendor->id);
+        if (Auth::user()->hasRole('Vendor')) {
+            $vendor_projects->where('vendor_id', Auth::user()->vendor->id);
         }
-         $vendor_projects =  $vendor_projects->with(['vendor.user','survey'])->paginate(10);
-         return view('masters.vendor-project-assign-list', compact('vendor_projects'));
 
+        $vendor_projects = $vendor_projects->with(['vendor.user', 'survey'])->paginate(10);
+        $suppliers = Project::where('status', 1)->get();
+
+        return view('masters.vendor-project-assign-list', compact('vendor_projects', 'suppliers'));
     }
 
 

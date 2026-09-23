@@ -2,15 +2,15 @@
     @section('content')
             <div class="content">
                 <div class="container-fluid">
-                    <h4 class="page-title">Supplier List </h4>
+                    <h4 class="page-title">Client Api List </h4>
                     <div class="row">
                         <div class="col-md-12">
                             <div class="card">
                                 <div class="card-header">
                                      <div class="card-title d-flex justify-content-between align-items-center">
-                                        Supplier List
+                                         Create Client
                                         <div>
-                                            <a href="{{ route('suppliers.create') }}" style="background-color:#007bff" class="bg-gray-800 hover:bg-gray-800 text-white font-bold py-2 px-4 rounded mb-4 inline-block">Create Supplier</a>
+                                            <a href="{{ route('suppliers.create') }}" style="background-color:#007bff" class="bg-gray-800 hover:bg-gray-800 text-white font-bold py-2 px-4 rounded mb-4 inline-block">Create Client</a>
                                          </div>
 
                                     </div>

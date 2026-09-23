@@ -8,11 +8,15 @@ use App\Http\Controllers\QuestionsController;
 use App\Http\Controllers\LanguageController;
 use App\Http\Controllers\SurveController;
 use App\Http\Controllers\VendorController;
+use App\Http\Controllers\PartnerController;
 use App\Http\Controllers\ApiController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\RoleController;
+use App\Http\Controllers\ProjectController;
+use App\Http\Controllers\MailTestController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\InvoiceController;
 
 /*
 |--------------------------------------------------------------------------
@@ -24,6 +28,12 @@ use Illuminate\Support\Facades\Route;
 | be assigned to the "web" middleware group. Make something great!
 |
 */
+
+
+Route::get('/mail-test/config', [MailTestController::class, 'config']);
+Route::get('/mail-test', [MailTestController::class, 'raw']);
+Route::get('/mail-test/forgot-password', [MailTestController::class, 'forgotPasswordTemplate']);
+
 Route::get('/setup', function () {
  Artisan::call('migrate', [
         '--force' => true,
@@ -33,10 +43,6 @@ Route::get('/setup', function () {
         '--class' => Database\Seeders\RolePermissionSeeder::class,
         '--force' => true,
     ]);
-    Artisan::call('db:seed', [
-        '--class' => Database\Seeders\ProjectSeeder::class,
-        '--force' => true,
-    ]);
 
     return response()->json([
         'status' => true,
@@ -44,6 +50,17 @@ Route::get('/setup', function () {
     ]);
 });
 
+Route::get('/project-seed', function () {
+     Artisan::call('db:seed', [
+        '--class' => Database\Seeders\SurveyApiProjectIdSeeder::class,
+        '--force' => true,
+    ]);
+
+    return response()->json([
+        'status' => true,
+        'message' => 'SurveyApiProjectIdSeeder completed successfully.',
+    ]);
+});
 
 Route::get('/clear-cache', function () {
 
@@ -56,11 +73,6 @@ Route::get('/clear-cache', function () {
     return "All Laravel caches cleared";
 });
 
-Route::get('/check-excel', function () {
-    return class_exists(\Maatwebsite\Excel\Facades\Excel::class)
-        ? 'Excel Installed'
-        : 'Excel Missing';
-});
 
 Route::get('/migrate-rollback', function () {
     Artisan::call('migrate:rollback');
@@ -85,23 +97,25 @@ Route::get('/', function () {
 
 Route::get('s2c', [ShortUrlController::class, 's2c'])->name('api.s2c');
 Route::get('c2s', [ShortUrlController::class, 'c2s'])->name('api.c2s');
+Route::get('iframe', [ShortUrlController::class, 'iframe'])->name('api.iframe');
+
 Route::get('/dashboard', [DashboardController::class, 'dashboard'])->middleware(['auth', 'verified'])->name('dashboard');
 Route::middleware('auth')->group(function () {
+    Route::get('/mail-test/resetmail', [MailTestController::class, 'resetmail']);
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+    Route::resource('roles', RoleController::class);
+    Route::resource('suppliers', ProjectController::class);
+    Route::get('/invoices/{id}/export', [InvoiceController::class, 'export'])->name('invoices.export');
+    Route::get('/invoices/{id}/show', [InvoiceController::class, 'show'])->name('invoices.show');
+    Route::get('/invoices', [InvoiceController::class, 'index'])->name('invoices.index');
+    Route::get('/invoice/create', [InvoiceController::class, 'create'])->name('invoices.create');
+    Route::post('/invoices', [InvoiceController::class, 'store'])->name('invoices.store');
+    Route::get('/invoice/{id}/pdf', [InvoiceController::class, 'downloadInvoice'])
+        ->name('invoice.pdf');
 });
 
-Route::middleware(['auth', 'role:SuperAdmin'])->group(function () {
-      Route::resource('roles', RoleController::class)->middleware([
-        'index'   => 'can:show-role',
-        'create'  => 'can:create-role',
-        'store'   => 'can:create-role',
-        'edit'    => 'can:edit-role',
-        'update'  => 'can:edit-role',
-        'destroy' => 'can:destroy-role',
-    ]);
-});
 
 Route::middleware(['auth', 'role:SuperAdmin|Admin|Vendor|Member'])->group(function () {
 
@@ -114,9 +128,7 @@ Route::middleware(['auth', 'role:SuperAdmin|Admin|Vendor|Member'])->group(functi
 
     Route::get('/survey-projects-assign/{id}/create', [SurveController::class, 'vendorProjectAssign'])->middleware('can:create-vendor-assign-projects')->name('vendor.project.assign');
     Route::post('/survey-projects-assign/store/{id}', [SurveController::class, 'vendorProjectAssignStore'])->middleware('can:create-vendor-assign-projects')->name('vendors-project-assign.store');
-
-// });
-// Route::middleware(['auth', 'role:SuperAdmin|Admin'])->group(function () {
+    Route::delete('/survey-projects-assign/{vendorProjectAssign}', [SurveController::class, 'destroy'])->middleware('can:delete-vendor-assign-projects')->name('vendor.project.assign.destroy');
 
     Route::get('user/create', [InviteAdminController::class, 'create'])->middleware('can:create-user')->name('companies.invite-admin');
     Route::post('user/store', [InviteAdminController::class, 'store'])->middleware('can:create-user')->name('companies.invite-admin.store');
@@ -124,14 +136,8 @@ Route::middleware(['auth', 'role:SuperAdmin|Admin|Vendor|Member'])->group(functi
     Route::put('/user/{id}', [InviteAdminController::class, 'update'])->middleware('can:edit-user')->name('companies.invite-admin.update');
     Route::get('users', [InviteAdminController::class, 'index'])->middleware('can:view-user')->name('companies.invite-list');
     Route::delete('/users/{user}', [InviteAdminController::class, 'destroy'])->middleware('can:destroy-user')->name('users.destroy');
-    Route::resource('vendors', VendorController::class)->middleware([
-        'index'   => 'can:view-vendor',
-        'create'  => 'can:create-vendor',
-        'store'   => 'can:create-vendor',
-        'edit'    => 'can:edit-vendor',
-        'update'  => 'can:edit-vendor',
-        'destroy' => 'can:delete-vendor',
-    ]);
+    Route::resource('vendors', VendorController::class);
+    Route::resource('partners', PartnerController::class);
 
     Route::get('/languages', [LanguageController::class, 'index'])->middleware('can:view-languages')->name('languages');
     Route::get('/questions', [QuestionsController::class, 'index'])->middleware('can:view-qualififcations')->name('questions');

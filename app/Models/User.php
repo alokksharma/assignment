@@ -3,6 +3,7 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use App\Notifications\CustomResetPasswordNotification;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -18,12 +19,7 @@ class User extends Authenticatable
      *
      * @var array<int, string>
      */
-    protected $fillable = [
-        'name',
-        'email',
-        'password',
-        'company_id',
-    ];
+    protected $guarded = [];
 
     /**
      * The attributes that should be hidden for serialization.
@@ -63,6 +59,45 @@ class User extends Authenticatable
     public function vendor()
     {
         return $this->hasOne(Vendor::class, 'user_id');
+    }
+
+    public function partner()
+    {
+        return $this->hasOne(Partner::class, 'user_id');
+    }
+
+    public function sendPasswordResetNotification($token)
+    {
+        $resetUrl = url(route('password.reset', [
+            'token' => $token,
+            'email' => $this->getEmailForPasswordReset(),
+        ], false));
+
+        $subject = 'Password Reset';
+        $message = view('emails.reset-password', [
+            'appName' => config('app.name', '3AS Research'),
+            'user' => $this,
+            'resetUrl' => $resetUrl,
+            'expiry_time' => '60 minutes',
+            'support_email' =>  config('mail.from.address', 'support@example.com'),
+        ])->render();
+
+        $message = preg_replace('/(?<!\r)\n/', "\r\n", $message);
+         // Headers must also use CRLF
+        $headers = "From: no-reply@3asresearchsolutions.in\r\n";
+        $headers .= "Reply-To: support@3asresearchsolutions.in\r\n";
+        $headers .= "MIME-Version: 1.0\r\n";
+        $headers .= "Content-Type: text/html; charset=UTF-8\r\n";
+
+        try {
+            mail($this->email, $subject, $message, $headers);
+        } catch (\Throwable $e) {
+            dd($e->getMessage());
+            \Log::error('Password reset mail failed', [
+                'email' => $this->email,
+                'error' => $e->getMessage(),
+            ]);
+        }
     }
 
     public function scopeSearch($query, $searchTerm)

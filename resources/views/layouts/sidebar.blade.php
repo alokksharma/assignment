@@ -51,6 +51,24 @@
                 </a>
             </li>
             @endcan
+            @can('show-client-api')
+            <li class="nav-item @if (request()->routeIs('suppliers.index')) active @endif">
+                <a href="{{ route('suppliers.index') }}">
+                    <i class="la la-table"></i>
+                    <p>Clien Api List</p>
+                    {{-- <span class="badge badge-count">14</span> --}}
+                </a>
+            </li>
+            @endcan
+            @can('show-partner')
+            <li class="nav-item @if (request()->routeIs('partners.index')) active @endif">
+                <a href="{{ route('partners.index') }}">
+                    <i class="la la-table"></i>
+                    <p>Partner List</p>
+                    {{-- <span class="badge badge-count">14</span> --}}
+                </a>
+            </li>
+            @endcan
             @can('view-vendor')
             <li class="nav-item @if (request()->routeIs('languages')) active @endif">
                 <a href="{{ route('languages') }}">
@@ -122,7 +140,17 @@
                     {{-- <span class="badge badge-count">8</span> --}}
                 </a>
             </li>
+             @endcan
+            @can('show-invoice')
+            <li class="nav-item @if (request()->routeIs('invoices.index')) active @endif">
+                <a href="{{ route('invoices.index') }}">
+                    <i class="la la-external-link"></i>
+                    <p>Invoice</p>
+                    {{-- <span class="badge badge-count">8</span> --}}
+                </a>
+            </li>
             @endcan
+
             {{-- logout button --}}
 
             <form method="POST" action="{{ route('logout') }}">

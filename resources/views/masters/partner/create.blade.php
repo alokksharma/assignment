@@ -2,7 +2,7 @@
 @section('content')
 <div class="content">
     <div class="container-fluid">
-        <h4 class="page-title">Create Partner</h4>
+        <h4 class="page-title">Create API Partner</h4>
         <div class="row">
             <div class="col-md-12">
                 <div class="card">

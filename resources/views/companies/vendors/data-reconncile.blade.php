@@ -108,6 +108,9 @@
                                             <input type="file" name="import_file" id="import_file" accept=".xlsx,.xls" style="display:none;">
                                         </label>
                                     </form>
+                                    <a href="{{ asset('assets/data-reconile.xlsx') }}" class="btn btn-secondary btn-sm mb-0 ml-2" download>
+                                        Download  Sheet
+                                    </a>
                                     <div class="progress mt-2" style="height: 20px; display:none;" id="importProgressWrapper">
                                         <div id="importProgressBar" class="progress-bar" role="progressbar" style="width: 0%">0%</div>
                                     </div>

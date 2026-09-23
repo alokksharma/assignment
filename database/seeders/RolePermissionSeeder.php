@@ -14,10 +14,19 @@ class RolePermissionSeeder extends Seeder
         // Create roles
         $superAdmin = Role::firstOrCreate(['name' => 'SuperAdmin']);
         $admin = Role::firstOrCreate(['name' => 'Admin']);
-        $tenant = Role::firstOrCreate(['name' => 'Tenant']);
+        $tenant = Role::firstOrCreate(['name' => 'Partner']);
 
         // Example permissions (add more as needed)
         $permissions = [
+            'create-invoice',
+            'edit-invoice',
+            'show-invoice',
+            'create-partner',
+            'edit-partner',
+            'show-partner',
+            'create-client-api',
+            'edit-client-api',
+            'show-client-api',
             'create-role',
             'edit-role',
             'destroy-role',
@@ -53,10 +62,6 @@ class RolePermissionSeeder extends Seeder
         $superAdmin->givePermissionTo($permissions);
         $tenant->givePermissionTo([
             'dashboard',
-            'create-role',
-            'edit-role',
-            'destroy-role',
-            'show-role',
         ]);
         // Create SuperAdmin user
         $user = User::firstOrCreate(
@@ -75,6 +80,6 @@ class RolePermissionSeeder extends Seeder
                 'password' => bcrypt('password'),
             ]
         );
-        $tenatUser->assignRole('Tenant');
+        $tenatUser->assignRole('Partner');
     }
 }

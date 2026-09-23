@@ -2,12 +2,34 @@
 @section('content')
 <div class="container">
     <div class="container-fluid">
-         <h4 class="page-title">Survey List </h4>
+         <h4 class="page-title">Questions List </h4>
          <div class="row">
             <div class="col-md-12">
                 <div class="card mt-4">
                     <div class="card-header">
-                         <div class="card-title d-flex justify-content-between align-items-center">Survey Form</div>
+                        <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+                            <h5 class="card-title mb-0">Survey Form</h5>
+
+                            <form action="{{ route('questions') }}" method="GET" class="d-flex flex-wrap align-items-center justify-content-end gap-2 ms-auto" style="min-width: 0;">
+                                <div class="d-flex align-items-center gap-2">
+                                    <label for="supplier_id" class="mb-0 text-nowrap">Supplier</label>
+                                    <select id="supplier_id" name="supplier_id" class="form-control form-control-sm" style="min-width: 220px;">
+                                        <option value="">All Suppliers</option>
+                                        @foreach($suppliers as $supplier)
+                                            <option value="{{ $supplier->id }}" {{ request('supplier_id') == $supplier->id ? 'selected' : '' }}>
+                                                {{ $supplier->name }} - {{ $supplier->code }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                </div>
+
+                                <button type="submit" class="btn btn-primary btn-sm">Filter</button>
+
+                                @if(request('supplier_id'))
+                                    <a href="{{ route('questions') }}" class="btn btn-secondary btn-sm">Reset</a>
+                                @endif
+                            </form>
+                        </div>
                     </div>
                     <div class="card-body">
                         <form>

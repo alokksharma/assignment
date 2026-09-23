@@ -9,12 +9,12 @@ $surveyApiUrl = $baseUrl . '/api/survey';
 @endphp
 <div class="content">
     <div class="container-fluid">
-        <h4 class="page-title">Partner Details</h4>
+        <h4 class="page-title">API Partner Details</h4>
         <div class="row">
             <div class="col-md-12">
                 <div class="card">
                     <div class="card-header d-flex justify-content-between align-items-center">
-                        <div>Partner Information</div>
+                        <div>API Partner Information</div>
                         <div>
                             <a href="{{ route('partners.edit', $user->id) }}" class="btn btn-warning btn-sm">Edit</a>
                             <a href="{{ route('partners.index') }}" class="btn btn-secondary btn-sm">Back</a>

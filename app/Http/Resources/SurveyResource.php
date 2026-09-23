@@ -16,6 +16,16 @@ class SurveyResource extends JsonResource
     {
         $supplierId = $request->header('Supplierid') ?? (optional($this->supplier)->id ?? '');
 
+        $multiplier = match ($this->audience_type) {
+            'B2C' => 0.06,
+            'B2B' => 0.04,
+            'HC'  => 0.01,
+            default => 0,
+        };
+
+        $surveyCpi = (float) $this->cpi * $multiplier;
+        $vendorCpi = optional($this->vendorProjectAssign()->latest()->first())->temp_cpi;
+
         return [
             // 'project_id'           => $this->supplier?->code ?? 'mx'.''.$this->project_id,
             // 'project_code'         => $this->project_code,
@@ -30,7 +40,9 @@ class SurveyResource extends JsonResource
             'facial_coding'        => $this->facial_coding,
             'project_ir'           => $this->project_ir,
             'project_loi'          => $this->project_loi,
-           // 'cpi'                  => optional($this->vendorProjectAssign()->latest()->first())->temp_cpi,
+        //    'cpi'                  => round($this->cpi ?? 0, 2),
+            'survey_cpi'           => round($surveyCpi, 2),
+          //  'vendor_cpi'           => $vendorCpi !== null ? round((float) $vendorCpi, 2) : null,
             'quota'                => $this->quota,
             'live_click_quota'     => $this->live_click_quota,
             'test_click_quota'     => $this->test_click_quota,

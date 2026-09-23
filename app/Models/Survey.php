@@ -55,9 +55,8 @@ class Survey extends Model
             $q->where('project_name', 'like', "%{$search}%")
             ->orWhere('project_code', 'like', "%{$search}%")
             ->orWhere('project_id', 'like', "%{$search}%")
-            ->orWhereHas('country', function ($q) use ($search) {
-                $q->where('name', 'like', "%{$search}%");
-            })
+            ->orWhereRaw("CONCAT('3AS_API-', DATE_FORMAT(created_at, '%m%Y'), '-', LPAD(id,4,'0')) LIKE ?", ["%{$search}%"])
+            ->orWhereRaw("CONCAT('3AS_API-', DATE_FORMAT(created_at, '%m%Y'), '-', LPAD(id,4,'0')) LIKE ?", ["%{$search}%"])
             ->orWhereHas('language', function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%");
             });

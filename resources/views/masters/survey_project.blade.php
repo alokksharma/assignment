@@ -2,6 +2,7 @@
 @section('content')
 @php
     $isVendor = auth()->user()->hasRole('Vendor');
+    $isSuperAdmin = auth()->user()->hasRole('SuperAdmin');
 @endphp
 <div class="content">
     <div class="container-fluid">
@@ -20,11 +21,13 @@
                                  <div class="form-group mr-2">
                                     <label for="vpi" class="pr-3 font-weight-bold">Project Status</label>
                                     <select name="survey_status" id="vpi" class="form-control vendor_list select2">
+                                        <option value="" {{ blank(request('survey_status')) ? 'selected' : '' }}>All</option>
                                         <option value="Live" {{ request('survey_status') == 'Live' ? 'selected' : '' }}>Live</option>
                                         <option value="Pause" {{ request('survey_status') == 'Pause' ? 'selected' : '' }}>Pause</option>
                                         <option value="Test" {{ request('survey_status') == 'Test' ? 'selected' : '' }}>Test</option>
                                     </select>
                                 </div>
+								@if($isSuperAdmin)
                                 <div class="form-group mr-2">
                                     <label for="supplier_id" class="pr-3 font-weight-bold">Supplier</label>
                                     <select name="supplier_id" id="supplier_id" class="form-control vendor_list select2">
@@ -37,11 +40,12 @@
                                         @endforeach
                                     </select>
                                 </div>
+								@endif
                                 <button type="submit" class="btn btn-light btn-sm mr-2">
                                     <i class="fa fa-search">Filter</i>
                                 </button>
                                 @if(request('q'))
-                                    <a href="{{ route('surveys') }}" class="btn btn-secondary ms-2">
+                                    <a href="{{ route('survey.project') }}" class="btn btn-secondary ms-2">
                                         Reset
                                     </a>
                                 @endif
@@ -59,11 +63,11 @@
                                 <tr>
                                     <th>#</th>
                                     <th>3AS Project ID</th>
-                                     @unless($isVendor)
+                                     @if($isSuperAdmin)
                                     <th>Client Project ID</th>
                                     <th>Client Project name</th>
                                     <th>Client Project Code</th>
-                                    @endunless
+                                    @endif
                                     <th>Survey Country</th>
                                     <th>Survey Language</th>
                                     <th>Survey Category</th>
@@ -74,17 +78,19 @@
                                     <th>Facial Coding</th>
                                     <th>Survey IR</th>
                                     <th>Survey LOI</th>
-                                    <th>Survey CPI</th>
+                                    <th>Survey CPI ($)</th>
+                                     @unless($isVendor)
                                     <th>Vendor CPI</th>
+                                    @endunless
                                     <th>Survey Quota</th>
                                     <th>Client Live Click Quota</th>
                                     <th>Client Test Click Quota</th>
                                     <th>Survey Start Date</th>
                                     <th>Survey End Date</th>
-                                     @unless($isVendor)
+                                     @if($isSuperAdmin)
                                         <th>Client Live URL</th>
                                         <th>Client Test URL</th>
-                                    @endunless
+                                    @endif
                                     <th>3AS Live URL</th>
                                     <th>3AS Test URL </th>
                                     @unless($isVendor)
@@ -108,43 +114,48 @@
                                         $i++;
                                         $colspan = $isVendor ? 26 : 30; // Adjust if you add/remove columns
                                         $multiplier = match ($survey->audience_type) {
-                                            'B2C' => 0.06,
-                                            'B2B' => 0.04,
-                                            'HC'  => 0.01,
+                                            'B2C' => 0.5,
+                                            'B2B' => 0.4,
+                                            'HC'  => 0.1,
                                             default => 0,
                                         };
 
                                         $surveyCpi = $survey->cpi * $multiplier;
+                                        $alreadyAssignedToSurvey = $isVendor && $survey->vendorProjectAssign()
+                                            ->where('vendor_id', auth()->user()->vendor?->id)
+                                            ->exists();
                                     @endphp
                                 <tr>
                                     <th scope="row">{{ $i }}</th>
                                     <td>{{ $survey->survey_code }}</td>
-                                    @unless($isVendor)
-                                        <td>{{ ($survey->supplier?->code ?? 'mx').''.$survey->project_id }}</td>
+                                    @if($isSuperAdmin)
+                                        <td>{{ ($survey->supplier?->code).''.$survey->project_id }}</td>
                                         <td>{{ $survey->project_name }}</td>
                                         <td>{{ $survey->project_code }}</td>
-                                    @endunless
+                                    @endif
                                     <td>{{ $survey->country?->name }}</td>
                                     <td>{{ $survey->language?->name }}</td>
                                     <td>{{ $survey->category }}</td>
                                     <td>{{ $survey->currency }}</td>
                                     <td>{{ $survey->audience_type }}</td>
                                     <td>{{ $survey->pii_collection }}</td>
-                                    <td>{{ $survey->application_download }}</td>
-                                    <td>{{ $survey->facial_coding }}</td>
+                                    <td>{{ $survey->application_download ?? 'No' }}</td>
+                                    <td>{{ $survey->facial_coding ?? 'No' }}</td>
                                     <td>{{ $survey->project_ir }}</td>
                                     <td>{{ $survey->project_loi }}</td>
-                                    <td>$ {{$surveyCpi }}</td>
+                                    <td> {{$surveyCpi }}</td>
+                                     @unless($isVendor)
                                     <td>{{ optional($survey->vendorProjectAssign()->latest()->first())->temp_cpi}}</td>
+                                    @endunless
                                     <td>{{ $survey->quota }}</td>
                                     <td>{{ $survey->live_click_quota }}</td>
                                     <td>{{ $survey->test_click_quota }}</td>
                                     <td>{{ $survey->project_start_date }}</td>
                                     <td>{{ $survey->project_end_date }}</td>
-                                    @unless($isVendor)
+                                   @if($isSuperAdmin)
                                         <td>{{ $survey->live_url }}</td>
                                         <td>{{ $survey->test_url }}</td>
-                                    @endunless
+                                    @endif
                                     <td>{{ config('app.url') }}/s2c?3ASPID={{$survey->survey_code }}&country={{$survey->country?->name }}&link=test&ccode=[PanelistID]</td>
                                     <td>{{ config('app.url') }}/s2c?3ASPID={{$survey->survey_code }}&country={{$survey->country?->name }}&link=live&ccode=[PanelistID]</td>
 									 @unless($isVendor)
@@ -158,7 +169,7 @@
 									</td>
                                     @endunless
                                     <td>{{ $survey->status }}</td>
-                                    <td>{{ $survey->device_type }}</td>
+                                    <td>{{ !empty($survey->device_type) ? $survey->device_type : 'all' }}</td>
                                     <td>{{ $survey->questions->pluck('question')->implode(', ') }}</td>
                                     {{-- <td>{!! $survey->target_spec !!}</td> --}}
                                     <th><button
@@ -176,7 +187,13 @@
                                         </button>
                                     </th>
                                     @can('create-vendor-assign-projects')
-                                    <th><a href="{{ route('vendor.project.assign', $survey->id)}}" class="btn btn-sm btn-warning"><i class="la la-plus"></i></a></th>
+                                    <th>
+                                        @if(!$alreadyAssignedToSurvey)
+                                            <a href="{{ route('vendor.project.assign', $survey->id)}}" class="btn btn-sm btn-warning"><i class="la la-plus"></i></a>
+                                        @else
+                                            <span class="badge badge-secondary">Assigned</span>
+                                        @endif
+                                    </th>
                                     @endcan
                                 </tr>
                                 @empty

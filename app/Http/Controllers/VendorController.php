@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Notifications\VendorLoginDetailsNotification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -9,6 +10,22 @@ use App\Models\User;
 
 class VendorController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('can:view-vendor')->only('index');
+
+        $this->middleware('can:create-vendor')->only([
+            'create',
+            'store',
+        ]);
+
+        $this->middleware('can:edit-vendor')->only([
+            'edit',
+            'update',
+        ]);
+
+        $this->middleware('can:delete-vendor')->only('destroy');
+    }
     public function index()
     {
        $users = User::role('Vendor')->with('vendor.vendorProjectAssigns')->search(request('q'))->paginate(10);
@@ -35,7 +52,10 @@ class VendorController extends Controller
            // 'vendor_id' => 'required|digits:6|unique:vendors,vendor_id',
         ]);
 
-        DB::transaction(function () use ($request) {
+        $user = null;
+        $vendor = null;
+
+        DB::transaction(function () use ($request, &$user, &$vendor) {
             $user = User::create([
                 'name' => $request->name,
                 'email' => $request->email,
@@ -46,9 +66,7 @@ class VendorController extends Controller
             ]);
 
             $user->assignRole('Vendor');
-            $role = 'Vendor';
 
-            // Store vendor record
             $vendor = $user->vendor()->create([
                 'user_id' => $user->id,
                 'currency' => $request->currency,
@@ -60,9 +78,49 @@ class VendorController extends Controller
             ]);
 
             $vendor->update([
-                'vendor_id' =>  now()->format('mY') . '-' . str_pad($vendor->id, 3, '0', STR_PAD_LEFT),
+                'vendor_id' => now()->format('mY') . '-' . str_pad($vendor->id, 3, '0', STR_PAD_LEFT),
             ]);
+             $message = view('emails.vendor-login-details', [
+                'vendor_name' => $user->name,
+                'vendor_company_name' => $request->company_name ?? $request->name,
+                'vendor_id' => $vendor->vendor_id ?? $user->id,
+                'login_email' =>$user->email,
+                'username' =>$user->email,
+                'vendor_portal_url' => url('/'),
+                'vendor_login_link' => route('login'),
+                'support_email' => config('mail.from.address', 'support@example.com'),
+                'company_website' =>  rtrim(config('app.url', 'https://3asresearch.com')),
+                'company_name' => config('app.name', '3AS Research'),
+        ])->render();
+        $message = preg_replace("/(?<!\r)\n/", "\r\n", $message);
+         // Headers must also use CRLF
+        $headers = "From: no-reply@3asresearchsolutions.in\r\n";
+        $headers .= "Reply-To: support@3asresearchsolutions.in\r\n";
+        $headers .= "MIME-Version: 1.0\r\n";
+        $headers .= "Content-Type: text/html; charset=UTF-8\r\n";
+
+        try {
+            mail($user->email, $subject, $message, $headers);
+        } catch (\Throwable $e) {
+            dd( $e);
+            \Log::error('Password changed mail failed', [
+                'email' => $user->email,
+                'error' => $e->getMessage(),
+            ]);
+        }
         });
+
+        // if ($user && $vendor) {
+        //     $user->notify(new VendorLoginDetailsNotification(
+        //         $user->name,
+        //         $request->company_name ?? $request->name,
+        //         $vendor->vendor_id ?? $user->id,
+        //         $user->email,
+        //         $user->email,
+        //         url('/'),
+        //         route('login')
+        //     ));
+        // }
 
         return redirect()->route('vendors.index')->with('success', 'Vendor created successfully!');
     }
@@ -81,6 +139,10 @@ class VendorController extends Controller
             'email' => 'required|email|unique:users,email,' . $id,
             'contact' => 'nullable|string|max:20',
             'address' => 'nullable|string|max:255',
+            'complete' => 'nullable|string|max:255',
+            'terminate' => 'nullable|string|max:255',
+            'quotafull' => 'nullable|string|max:255',
+            'speedster' => 'nullable|string|max:255',
         ]);
 
         $user = User::findOrFail($id);
@@ -91,6 +153,14 @@ class VendorController extends Controller
             'contact' => $request->contact,
             'address' => $request->address,
         ]);
+        $user->vendor()->update([
+                'currency'   => $request->currency,
+                'complete'   => $request->complete,
+                'terminate'  => $request->terminate,
+                'quotafull'  => $request->quotafull,
+                'speedster'  => $request->speedster,
+                'expired_at' => $request->expired_at,
+            ]);
 
         // if ($user->vendor) {
         //     $user->vendor->update([
@@ -100,7 +170,7 @@ class VendorController extends Controller
         // }
 
         return redirect()
-            ->route('companies.invite-list')
+           ->route('vendors.index')
             ->with('success', 'Vendor updated successfully.');
     }
 

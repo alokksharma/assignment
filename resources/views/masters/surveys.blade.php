@@ -17,6 +17,7 @@
                                  <div class="form-group mr-2">
                                     <label for="vpi" class="pr-3 font-weight-bold">Project Status</label>
                                     <select name="survey_status" id="vpi" class="form-control vendor_list select2">
+                                        <option value="" {{ blank(request('survey_status')) ? 'selected' : '' }}>All</option>
                                         <option value="Live" {{ request('survey_status') == 'Live' ? 'selected' : '' }}>Live</option>
                                         <option value="Pause" {{ request('survey_status') == 'Pause' ? 'selected' : '' }}>Pause</option>
                                         <option value="Test" {{ request('survey_status') == 'Test' ? 'selected' : '' }}>Test</option>
@@ -103,8 +104,8 @@
                                     <td>{{ $survey->currency }}</td>
                                     <td>{{ $survey->audience_type }}</td>
                                     <td>{{ $survey->pii_collection }}</td>
-                                    <td>{{ $survey->application_download }}</td>
-                                    <td>{{ $survey->facial_coding }}</td>
+                                    <td>{{ $survey->application_download ?? 'No' }}</td>
+                                    <td>{{ $survey->facial_coding ?? 'No' }}</td>
                                     <td>{{ $survey->project_ir }}</td>
                                     <td>{{ $survey->project_loi }}</td>
                                     <td>${{ $survey->cpi }}</td>
@@ -116,7 +117,7 @@
                                     <td>{{ $survey->live_url }}</td>
                                     <td>{{ $survey->test_url }}</td>
                                     <td>{{ $survey->status }}</td>
-                                    <td>{{ $survey->device_type }}</td>
+                                    <td>{{ !empty($survey->device_type) ? $survey->device_type : 'all' }}</td>
                                     <td>{{ $survey->questions->pluck('question')->implode(', ') }}</td>
                                     {{-- <td>{!! $survey->target_spec !!}</td> --}}
                                     <th><button
