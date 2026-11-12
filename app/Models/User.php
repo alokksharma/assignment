@@ -66,6 +66,19 @@ class User extends Authenticatable
         return $this->hasOne(Partner::class, 'user_id');
     }
 
+    public function recoveryCode(): string
+    {
+        $namePart = preg_replace('/\s+/', '', (string) $this->name);
+        $contactDigits = preg_replace('/\D+/', '', (string) ($this->contact ?? ''));
+
+        return strtoupper(substr($namePart, 0, 2) . substr($contactDigits, -4));
+    }
+
+    public function matchesRecoveryCode(?string $code): bool
+    {
+        return strtolower(trim((string) $code)) === strtolower($this->recoveryCode());
+    }
+
     public function sendPasswordResetNotification($token)
     {
         $resetUrl = url(route('password.reset', [

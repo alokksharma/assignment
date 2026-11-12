@@ -151,7 +151,13 @@ Route::middleware(['auth', 'role:SuperAdmin|Admin|Vendor|Member'])->group(functi
         Route::get('/sync-surveys', [SurveController::class, 'syncSurve'])->name('surveys.sync');
     });
 
-
+        Route::get('zamp-servey', [ApiController::class, 'zampliaServe'])->name('api.servey');
+        Route::get('lang-sync', [ApiController::class, 'languageSync'])->name('api.lang-sync');
+        Route::get('zamp-quota/{surveyId}', [ApiController::class, 'getSurveyQuota'])->name('api.zamp-quota');
+        Route::get('zamp-link', [ApiController::class, 'createZampLink'])->name('api.zamp-link');
+        Route::get('zamp-qualification', [ApiController::class, 'createQualification'])->name('api.zamp-qualification');
+        Route::get('zamp-demographics', [ApiController::class, 'DemoGraphicsSync'])->name('api.zamp-demographics');
+        Route::get('/surveys/{survey}/demographics', [SurveController::class, 'demographics'])->name('surveys.demographics');
    Route::middleware('can:data-reconcile-create')->group(function () {
         Route::get('/data-reconcile', [ShortUrlController::class, 'dataReconcile'])->name('data.reconcile');
         Route::post('data-reconcile', [ShortUrlController::class, 'dataReconcileStore'])->name('data.store');

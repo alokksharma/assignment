@@ -15,6 +15,8 @@ class RolePermissionSeeder extends Seeder
         $superAdmin = Role::firstOrCreate(['name' => 'SuperAdmin']);
         $admin = Role::firstOrCreate(['name' => 'Admin']);
         $tenant = Role::firstOrCreate(['name' => 'Partner']);
+        $vendor = Role::firstOrCreate(['name' => 'Vendor']);
+        $member = Role::firstOrCreate(['name' => 'Member']);
 
         // Example permissions (add more as needed)
         $permissions = [

@@ -16,7 +16,6 @@ use App\Http\Controllers\Api\PartnerApiController;
 */
 
 Route::get('parners', [PartnerApiController::class, 'parners'])->name('parners');
-
 Route::middleware('supplier.auth')->group(function () {
 
     Route::get('languages', [PartnerApiController::class, 'languages'])->name('languages');

@@ -80,6 +80,7 @@ class VendorController extends Controller
             $vendor->update([
                 'vendor_id' => now()->format('mY') . '-' . str_pad($vendor->id, 3, '0', STR_PAD_LEFT),
             ]);
+            $subject = "vendor create successful";
              $message = view('emails.vendor-login-details', [
                 'vendor_name' => $user->name,
                 'vendor_company_name' => $request->company_name ?? $request->name,

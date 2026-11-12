@@ -48,6 +48,29 @@
                                                 <td>{{ $project->status }}</td>
                                                 <td>{{ $project->created_at->format('Y-m-d H:i') }}</td>
                                                 <td>
+                                                    <button
+                                                        type="button"
+                                                        class="btn btn-sm btn-info copy-mail-template mb-1"
+                                                        data-target="project-mail-template-{{ $project->id }}"
+                                                    >
+                                                        Copy Mail Template
+                                                    </button>
+
+                                                    <div id="project-mail-template-{{ $project->id }}" class="d-none">
+                                                        <x-project-mail-template
+                                                            :project-name="$project->name"
+                                                            :client-name="$project->client_name ?? 'Client'"
+                                                            :project-code="$project->code"
+                                                            :project-url="$project->url"
+                                                            :supplier-id="$project->supplier_id ?? 'N/A'"
+                                                            :supplier-token="$project->supplier_token ?? 'N/A'"
+                                                            :status="$project->status == 1 ? 'Active' : 'Inactive'"
+                                                            :support-email="config('mail.from.address', 'support@example.com')"
+                                                            :company-name="config('app.name', '3AS Research')"
+                                                            :company-website="rtrim(config('app.url', 'https://3asresearch.com'))"
+                                                        />
+                                                    </div>
+
                                                     <a href="{{ route('suppliers.edit', $project->id) }}"
                                                         class="btn btn-sm btn-primary">
                                                         Edit
@@ -92,5 +115,44 @@
             </div>
     @endsection
     @push('scripts')
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            document.querySelectorAll('.copy-mail-template').forEach(function (btn) {
+                btn.addEventListener('click', function () {
+                    const container = document.getElementById(btn.dataset.target);
+                    if (!container) return;
 
+                    const html = container.innerHTML;
+                    const text = container.innerText;
+
+                    if (navigator.clipboard && window.ClipboardItem) {
+                        const item = new ClipboardItem({
+                            'text/html': new Blob([html], { type: 'text/html' }),
+                            'text/plain': new Blob([text], { type: 'text/plain' }),
+                        });
+
+                        navigator.clipboard.write([item]).then(function () {
+                            alert('Mail template copied to clipboard.');
+                        }).catch(function () {
+                            navigator.clipboard.writeText(text);
+                            alert('Mail template copied to clipboard.');
+                        });
+                        return;
+                    }
+
+                    navigator.clipboard.writeText(text).then(function () {
+                        alert('Mail template copied to clipboard.');
+                    }).catch(function () {
+                        const tempInput = document.createElement('textarea');
+                        tempInput.value = text;
+                        document.body.appendChild(tempInput);
+                        tempInput.select();
+                        document.execCommand('copy');
+                        document.body.removeChild(tempInput);
+                        alert('Mail template copied to clipboard.');
+                    });
+                });
+            });
+        });
+    </script>
     @endpush

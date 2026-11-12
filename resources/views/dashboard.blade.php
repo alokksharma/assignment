@@ -152,6 +152,54 @@
                 </div>
             </div>
         </div>
+
+        <div class="row row-card-no-pd mt-3">
+            <div class="col-md-3">
+                <div class="card">
+                    <div class="card-body">
+                        <p class="fw-bold mt-1">Sync ZAMP Languages</p>
+                        <a href="{{ route('api.lang-sync') }}" class="btn btn-warning btn-full text-left mt-3 mb-3 dashboard-sync-link">
+                            <i class="la la-language"></i> Sync ZAMP Languages
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-3">
+                <div class="card">
+                    <div class="card-body">
+                        <p class="fw-bold mt-1">Sync ZAMP Qualification</p>
+                        <a href="{{ route('api.zamp-qualification') }}" class="btn btn-success btn-full text-left mt-3 mb-3 dashboard-sync-link">
+                            <i class="la la-check-circle"></i> Sync Qualification
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            @if ($hasZampLanguages ?? false)
+                <div class="col-md-3">
+                    <div class="card">
+                        <div class="card-body">
+                            <p class="fw-bold mt-1">Sync ZAMP Survey Projects</p>
+                            <a href="{{ route('api.servey') }}" class="btn btn-info btn-full text-left mt-3 mb-3 dashboard-sync-link">
+                                <i class="la la-list-alt"></i> Sync Survey Projects
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card">
+                        <div class="card-body">
+                            <p class="fw-bold mt-1">Sync ZAMP Demographics</p>
+                            <a href="{{ route('api.zamp-demographics') }}" class="btn btn-primary btn-full text-left mt-3 mb-3 dashboard-sync-link">
+                                <i class="la la-list-alt"></i> Sync Demographics
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            @endif
+
+        </div>
         @endif
         <div class="row row-card-no-pd">
             <div class="col-md-4">
@@ -372,6 +420,10 @@
 
         $(this).find('button[type="submit"]')
             .prop('disabled', true);
+    });
+
+    $(document).on('click', '.dashboard-sync-link', function () {
+        $('#syncLoader').show();
     });
 </script>
 @endpush

@@ -69,7 +69,7 @@
                 </a>
             </li>
             @endcan
-            @can('view-vendor')
+            @can('view-languages')
             <li class="nav-item @if (request()->routeIs('languages')) active @endif">
                 <a href="{{ route('languages') }}">
                     <i class="la la-language"></i>

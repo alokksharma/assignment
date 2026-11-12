@@ -95,12 +95,13 @@ class ShortUrlController extends Controller
         } else {
             $device = 'Desktop';
         }
+        $allowedDevices = array_map('trim', explode(',', strtolower((string) ($survey?->device_type ?? ''))));
+        $deviceAllowed = in_array(strtolower($device), $allowedDevices, true)
+            || (in_array('both', $allowedDevices, true) && in_array(strtolower($device), ['mobile', 'desktop'], true));
+
         if (
             $survey?->device_type &&
-            in_array(
-                $device,
-                array_map('trim', explode(',', $survey->device_type))
-            )
+            $deviceAllowed
         ) {
             $notes = 'Success';
             //  $ipAddress = file_get_contents('https://api.ipify.org');

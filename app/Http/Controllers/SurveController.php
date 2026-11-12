@@ -32,11 +32,25 @@ class SurveController extends Controller
         })
         ->with([
             'questions.options',
+            'surveyQuestions.surveyOption',
+            'surveyQuestions.question',
+            'surveyQuotaQualifications',
             'country:id,name',
             'language:id,name',
             'supplier',
+           'demographics' => function ($query) {
+                $query->select([
+                    'demographics.id',
+                    'demographics.world_language_id',
+                    'demographics.demographic_name',
+                    'demographics.question_id',
+                    'demographics.question_text',
+                    'demographics.question_type',
+                    'demographics.answer_codes',
+                ]);
+            },
         ])
-        ->orderBy('created_at', 'desc')
+        ->orderBy('cpi', 'desc')
         ->paginate(20);
         $suppliers = Project::where('status', 1)->get();
         return view('masters.surveys', compact('surveys', 'suppliers'));
@@ -54,16 +68,30 @@ class SurveController extends Controller
         })
         ->with([
             'questions.options',
+             'surveyQuestions.surveyOption',
+            'surveyQuestions.question',
+            'surveyQuotaQualifications',
             'country:id,name',
             'language:id,name',
+             'demographics' => function ($query) {
+                $query->select([
+                    'demographics.id',
+                    'demographics.world_language_id',
+                    'demographics.demographic_name',
+                    'demographics.question_id',
+                    'demographics.question_text',
+                    'demographics.question_type',
+                    'demographics.answer_codes',
+                ]);
+            },
         ])
-        ->orderBy('created_at', 'desc')
+        ->orderBy('cpi', 'desc')
         ->paginate(20);
         $suppliers = Project::get();
         return view('masters.survey_project', compact('surveys','suppliers'));
     }
 
-    public function syncSurve(Request $request)
+   public function syncSurve(Request $request)
     {
         try {
             $url = config('marketxcel.base_url') . '/send_supplier_data';
@@ -98,7 +126,6 @@ class SurveController extends Controller
                 ['path' => $request->url(), 'query' => $request->query()]
             );
             $rows = collect($paginatedRows->items());
-            // dd($apiProjectIds, $rows, Survey::where('api_project_id', $apiProjectPk)->get());
 
 
             $countries = Country::pluck('id', 'name');
@@ -141,37 +168,31 @@ class SurveController extends Controller
                     // No questions available
                         if (!empty($data['question']) && is_array($data['question'])) {
                             foreach ($data['question'] as $questionId) {
-                                $surveyQuestion = SurveyQuestion::updateOrCreate(
-                                    [
-                                        'survey_id'   => $survey->id,
-                                        'question_id' => $questionId,
-                                    ]
+                                $surveyQuestion = $survey->surveyQuestions()->updateOrCreate(
+                                    ['question_id' => $questionId],
+                                    []
                                 );
                                 $optionsData = $data['option'][$questionId] ?? [];
                                 // Delete options that are no longer available
                                 if (!empty($optionsData)) {
-                                    SurveyQuestionOption::where(
-                                        'question_id',
-                                        $questionId
-                                    )
-                                    ->whereNotIn('option', $optionsData)
-                                    ->delete();
+                                    SurveyQuestionOption::where('survey_question_id', $surveyQuestion->id)
+                                        ->Where('question_id', $questionId)
+                                        ->whereNotIn('option', $optionsData)
+                                        ->delete();
 
                                 } else {
                                     // Remove all old options if no options exist
-                                    SurveyQuestionOption::where(
-                                        'question_id',
-                                        $questionId
-                                    )->delete();
-
+                                    SurveyQuestionOption::where('survey_question_id', $surveyQuestion->id)
+                                        ->Where('question_id', $questionId)
+                                        ->delete();
                                     continue;
                                 }
-
                                 $options = [];
                                 foreach ($optionsData as $optionCode) {
                                     $options[] = [
+                                        'survey_question_id' => $surveyQuestion->id,
                                         'question_id'        => $questionId,
-                                        'option'        => $optionCode,
+                                        'option'             => $optionCode,
                                         'option_text'        => $data['option_text'][$questionId][$optionCode] ?? '',
                                         'option_quota'       => $data['option_quota'][$questionId][$optionCode] ?? 0,
                                     ];
@@ -180,7 +201,7 @@ class SurveController extends Controller
                                 if (!empty($options)) {
                                     SurveyQuestionOption::upsert(
                                         $options,
-                                        ['question_id', 'option'],
+                                        ['survey_question_id', 'option'],
                                         ['option_text', 'option_quota']
                                     );
                                 }
@@ -192,8 +213,12 @@ class SurveController extends Controller
                                     continue;
                                 }
 
-                                $surveyQuestion = SurveyQuestion::updateOrCreate(
-                                    ['survey_id' => $survey->id, 'question_id' => $questionId]
+                                // $surveyQuestion = SurveyQuestion::updateOrCreate(
+                                //     ['survey_id' => $survey->id, 'question_id' => $questionId]
+                                // );
+                                 $surveyQuestion = $survey->surveyQuestions()->updateOrCreate(
+                                    ['question_id' => $questionId],
+                                    []
                                 );
 
                                 $optionsData = [];
@@ -237,16 +262,20 @@ class SurveController extends Controller
                                 }
 
                                 if (!empty($optionsData)) {
-                                    SurveyQuestionOption::where('question_id', $questionId)
+                                    SurveyQuestionOption::where('survey_question_id', $surveyQuestion->id)
+                                        ->Where('question_id', $questionId)
                                         ->whereNotIn('option', $optionsData)
                                         ->delete();
                                 } else {
-                                    SurveyQuestionOption::where('question_id', $questionId)->delete();
+                                    SurveyQuestionOption::where('survey_question_id', $surveyQuestion->id)
+                                        ->Where('question_id', $questionId)
+                                        ->delete();
                                 }
 
                                 $options = [];
                                 foreach ($optionsData as $opt) {
                                     $options[] = [
+                                        'survey_question_id' => $surveyQuestion->id,
                                         'question_id' => $questionId,
                                         'option' => $opt,
                                         'option_text' => $optionTextMap[$opt] ?? '',
@@ -255,7 +284,7 @@ class SurveController extends Controller
                                 }
 
                                 if (!empty($options)) {
-                                    SurveyQuestionOption::upsert($options, ['question_id', 'option'], ['option_text', 'option_quota']);
+                                    SurveyQuestionOption::upsert($options, ['survey_question_id', 'option'], ['option_text', 'option_quota']);
                                 }
                             }
                         }
@@ -368,14 +397,40 @@ class SurveController extends Controller
         ]);
     }
 
-    public function vendorProjectAssignList()
+   public function vendorProjectAssignList()
     {
         $supplierId = request('supplier_id');
+        $surveyStatus = request('survey_status');
+
         $vendor_projects = VendorProjectAssign::query()
+           ->with([
+                'vendor.user',
+                'survey.surveyQuestions.surveyOption',
+                'survey.surveyQuestions.question',
+                 'survey.surveyQuotaQualifications',
+                'survey.country:id,name',
+                'survey.language:id,name',
+            'survey.demographics' => function ($query) {
+                $query->select([
+                    'demographics.id',
+                    'demographics.world_language_id',
+                    'demographics.demographic_name',
+                    'demographics.question_id',
+                    'demographics.question_text',
+                    'demographics.question_type',
+                    'demographics.answer_codes',
+                ]);
+            },
+    ])
             ->search(request('q'))
             ->when($supplierId, function ($query, $supplierId) {
                 $query->whereHas('survey', function ($subQuery) use ($supplierId) {
                     $subQuery->where('api_project_id', $supplierId);
+                });
+            })
+            ->when($surveyStatus, function ($query, $surveyStatus) {
+                $query->whereHas('survey', function ($subQuery) use ($surveyStatus) {
+                    $subQuery->where('status', $surveyStatus);
                 });
             });
 
@@ -388,7 +443,6 @@ class SurveController extends Controller
 
         return view('masters.vendor-project-assign-list', compact('vendor_projects', 'suppliers'));
     }
-
 
     public function vendorProjectAssignStore(Request $request, $id)
     {
@@ -430,5 +484,14 @@ class SurveController extends Controller
         return redirect()
             ->route('vendor.project.report')
             ->with('success', 'Survey project deleted successfully.');
+    }
+
+    public function demographics(Request $request, Survey $survey)
+    {
+        $rows = $survey->demographics()
+            ->orderBy('id')
+            ->paginate(10, ['*'], 'page', $request->integer('page', 1));
+
+        return view('survey.partials.demographics', compact('rows', 'survey'));
     }
 }

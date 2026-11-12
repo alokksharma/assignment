@@ -12,6 +12,7 @@ use App\Models\Survey;
 use App\Models\VendorProjectAssign;
 use App\Models\Proof;
 use App\Models\Project;
+use App\Models\WorldLanguage;
 
 class DashboardController extends Controller
 {
@@ -27,7 +28,11 @@ class DashboardController extends Controller
         $totalAssignProject = 0;
         $projectCount = Proof::query();
         $vendorProjectAssignQuery = VendorProjectAssign::query();
-        $suppliers = Project::where('status', 1)->get();
+        $zampProject = Project::where('code', 'ZAM')->first();
+        $hasZampLanguages = $zampProject
+            ? WorldLanguage::where('api_id', $zampProject->id)->exists()
+            : false;
+        $suppliers = Project::where('status', 1)->WhereIn('code', ['MX', 'HBG'])->get();
         if (Auth::user()->hasRole('SuperAdmin') || Auth::user()->hasRole('Admin')) {
             $languagesCount = Language::query()->count();
             $countriesCount = Country::query()->count();
@@ -55,6 +60,6 @@ class DashboardController extends Controller
                 SUM(status = 4) as quality_count
             ")
             ->first();
-        return view('dashboard', compact('questionsCount', 'languagesCount', 'countriesCount', 'surveysCount','projectCount', 'completeProjectCount', 'totalVendorAssign', 'totalAssignProject', 'suppliers'));
+        return view('dashboard', compact('questionsCount', 'languagesCount', 'countriesCount', 'surveysCount','projectCount', 'completeProjectCount', 'totalVendorAssign', 'totalAssignProject', 'suppliers', 'hasZampLanguages'));
     }
 }

@@ -81,7 +81,6 @@ class InviteAdminController extends Controller
             'email' => $request->email,
             'address' => $request->address,
             'contact' => $request->contact,
-            'role' => $request->role,
         ]);
         //  if($request->role === "Member"){
         //      $member = $user->partner()->update([
@@ -89,6 +88,7 @@ class InviteAdminController extends Controller
         //         'is_active' => 1,
         //     ]);
         // }
+        $user->syncRoles($request->input('role', []));
         return redirect()
             ->route('companies.invite-list')
             ->with('success', 'User updated successfully.');

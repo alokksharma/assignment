@@ -10,19 +10,51 @@
 	<link rel="stylesheet" href="{{ asset('assets/css/demo.css') }}">
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
     <style>
+        #targetSpec {
+            width: 100%;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
         #targetSpec table {
             width: 100% !important;
+            min-width: 640px;
             border-collapse: collapse;
+            table-layout: auto;
         }
 
         #targetSpec table td,
         #targetSpec table th {
             border: 1px solid #ddd;
             padding: 8px;
+            vertical-align: top;
+            word-break: break-word;
+            white-space: normal;
         }
 
         #targetSpec table tr:nth-child(even) {
             background-color: #f8f9fa;
+        }
+
+        .modal-dialog {
+            max-width: 90vw;
+            width: auto;
+            margin: 1.75rem auto;
+        }
+
+        @media (max-width: 768px) {
+            .modal-dialog {
+                max-width: 96vw;
+                margin: 0.5rem auto;
+            }
+
+            .modal-body {
+                padding: 0.75rem;
+            }
+
+            #targetSpec table {
+                min-width: 540px;
+            }
         }
 
 		/* ===== Footer ===== */

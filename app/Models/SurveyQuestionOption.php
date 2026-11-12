@@ -11,4 +11,8 @@ class SurveyQuestionOption extends Model
 
     protected $guarded = [];
 
+    public function surveyQuestion()
+    {
+        return $this->belongsTo(SurveyQuestion::class, 'survey_question_id');
+    }
 }

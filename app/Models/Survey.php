@@ -24,9 +24,22 @@ class Survey extends Model
         );
     }
 
+    public function scopeWithQuestions()
+    {
+        return $this->questions
+            ->where('project_id', $this->api_project_id)
+            ->where('language_id', $this->language_id)
+            ->values();
+    }
+
     public function surveyQuestions()
     {
         return $this->hasMany(SurveyQuestion::class, 'survey_id');
+    }
+
+    public function surveyQuotaQualifications()
+    {
+        return $this->hasMany(SurveyQuotaQualification::class, 'survey_id');
     }
 
     public function country()
@@ -44,6 +57,31 @@ class Survey extends Model
         return $this->belongsTo(Language::class, 'language_id', 'id');
     }
 
+    public function worldLanguage()
+    {
+        return $this->belongsTo(WorldLanguage::class, 'language_id', 'language_id');
+    }
+
+    public function demographics()
+    {
+        return $this->hasManyThrough(
+            Demographic::class,
+            WorldLanguage::class,
+            'language_id',
+            'world_language_id',
+            'language_id',
+            'id'
+        )->select([
+            'demographics.id',
+            'demographics.world_language_id',
+            'demographics.demographic_name',
+            'demographics.question_id',
+            'demographics.question_text',
+            'demographics.question_type',
+            'demographics.answer_codes',
+        ]);
+    }
+
     public function scopeSearch(Builder $query, ?string $search): Builder
     {
         if (blank($search)) {
@@ -55,8 +93,10 @@ class Survey extends Model
             $q->where('project_name', 'like', "%{$search}%")
             ->orWhere('project_code', 'like', "%{$search}%")
             ->orWhere('project_id', 'like', "%{$search}%")
-            ->orWhereRaw("CONCAT('3AS_API-', DATE_FORMAT(created_at, '%m%Y'), '-', LPAD(id,4,'0')) LIKE ?", ["%{$search}%"])
-            ->orWhereRaw("CONCAT('3AS_API-', DATE_FORMAT(created_at, '%m%Y'), '-', LPAD(id,4,'0')) LIKE ?", ["%{$search}%"])
+            ->orWhereRaw(
+              "CONCAT('3AS_API-', DATE_FORMAT(created_at, '%m%Y'), '-', LPAD(id,4,'0')) LIKE ?",
+              ["%{$search}%"]
+          )
             ->orWhereHas('language', function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%");
             });
@@ -75,6 +115,18 @@ class Survey extends Model
     public function vendorProjectAssign()
     {
         return $this->hasMany(VendorProjectAssign::class, 'survey_id');
+
+    }
+
+    public function surveyQuestionWithOptions($projectId, $questionIds)
+    {
+        if (empty($projectId) || empty($questionIds)) {
+            return collect();
+        }
+        $questions = Question::where('project_id', $projectId)
+                    ->whereIn('question_id', $questionIds)
+                    ->get();
+        return $questions;
 
     }
 

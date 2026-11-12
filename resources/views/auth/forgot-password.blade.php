@@ -21,5 +21,11 @@
                 {{ __('Email Password Reset Link') }}
             </x-primary-button>
         </div>
+
+        <div class="mt-4 text-sm text-gray-600">
+            <a href="{{ route('password.request.by_question') }}" class="underline text-gray-900 hover:text-gray-700">
+                {{ __('Use recovery code instead') }}
+            </a>
+        </div>
     </form>
 </x-guest-layout>

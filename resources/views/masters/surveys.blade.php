@@ -51,6 +51,12 @@
                                 {{ session('success') }}
                             </div>
                         @endif
+
+                        @if(session('error'))
+                            <div class="alert alert-danger mt-3 mb-0">
+                                {{ session('error') }}
+                            </div>
+                        @endif
                     </div>
                     <div class="table-responsive">
                         <table class="table table-bordered">
@@ -80,8 +86,11 @@
                                     <th>Test Url</th>
                                     <th>Status</th>
                                     <th>Device Type</th>
-                                     <th>Qualification</th>
+                                    <th>Qualification</th>
                                     <th>Target Spec</th>
+                                    <th>Demographics</th>
+                                    <th>Quota Qualifications</th>
+
 
                                 </tr>
                             </thead>
@@ -114,36 +123,120 @@
                                     <td>{{ $survey->test_click_quota }}</td>
                                     <td>{{ $survey->project_start_date }}</td>
                                     <td>{{ $survey->project_end_date }}</td>
-                                    <td>{{ $survey->live_url }}</td>
+                                    <td>@if ($survey->live_url)
+                                        {{ $survey->live_url }}
+                                        @elseif ($survey->supplier?->code == "ZAM")
+                                            <a href="{{ route('api.zamp-link',['survey' => $survey->id, 'SurveyId' => $survey->project_id]) }}" class="btn btn-sm btn-primary">
+                                                Generate link
+                                            </a>
+                                        @endif
+                                    </td>
                                     <td>{{ $survey->test_url }}</td>
                                     <td>{{ $survey->status }}</td>
                                     <td>{{ !empty($survey->device_type) ? $survey->device_type : 'all' }}</td>
-                                    <td>{{ $survey->questions->pluck('question')->implode(', ') }}</td>
+                                    <td>
+                                        @php
+                                           $questions = $survey->surveyQuestionWithOptions($survey->api_project_id, $survey->surveyQuestions->pluck('question_id')->toArray());
+                                        @endphp
+                                        @forelse ($questions as $sq)
+                                            @php
+                                                $mappedOptions = $sq?->mapped_options ?? [];
+                                                if (is_string($mappedOptions)) {
+                                                    $mappedOptions = json_decode($mappedOptions, true) ?? [];
+                                                }
+
+                                                $mappedOptions = is_array($mappedOptions) ? collect($mappedOptions) : collect();
+                                                $mappedOptionLabels = $mappedOptions
+                                                    ->map(function ($option, $key) use ($sq, $survey) {
+                                                        // Construct keys for both 1-based and 0-based index
+                                                        $matchedSq = $survey->surveyQuestions->firstWhere('question_id', $sq?->question_id);
+                                                        return $option['AnswerText']
+                                                            ?? $option
+                                                            ??'';
+                                                    })
+                                                    ->filter(fn ($value) => is_string($value) ? trim($value) !== '' : !empty($value))
+                                                    ->values();
+                                            @endphp
+                                            {{ $sq?->question_id }} - {{ $sq?->question }}<br>
+                                            {{ $mappedOptionLabels->isNotEmpty() ? $mappedOptionLabels->implode(', ') : (  optional($survey->surveyQuestions?->firstWhere('question_id', $sq?->question_id))->surveyOption?->pluck('option_text')->implode(', ') ?? 'N/A') }}</br>
+                                        @empty
+                                            <span class="text-muted">N/A</span> <br>
+                                        @endforelse
+                                    </td>
+
                                     {{-- <td>{!! $survey->target_spec !!}</td> --}}
-                                    <th><button
-                                            type="button"
-                                            class="btn btn-sm btn-primary show-details"
-                                            data-toggle="modal"
-                                            data-target="#modalUpdate"
-                                            data-id="{{ $survey->id }}"
-                                            data-target-spec="{{ $survey->target_spec }}"
-                                            data-name="{{ $survey->project_name }}"
-                                        >
-                                            <p>
-                                            <i class="la la-hand-pointer-o"></i>
-                                            Show details</p>
-                                        </button>
+                                    <th>
+                                        @if ($survey->target_spec)
+                                            <button
+                                                type="button"
+                                                class="btn btn-sm btn-primary show-details"
+                                                data-toggle="modal"
+                                                data-target="#modalUpdate"
+                                                data-id="{{ $survey->id }}"
+                                                data-target-spec="{{ $survey->target_spec }}"
+                                                data-name="{{ $survey->project_name }}"
+                                            >
+                                                <p><i class="la la-hand-pointer-o"></i> Show details</p>
+                                            </button>
+                                        @else
+                                            <span class="text-muted">N/A</span>
+
+                                        @endif
                                     </th>
+                                     <th>
+                                       @if ($survey->supplier?->code == "ZAM")
+                                            <button type="button" class="btn btn-sm btn-primary show-details"
+                                                data-toggle="modal" data-target="#modalUpdate"
+                                                data-demo-url="{{ route('surveys.demographics', $survey) }}"
+                                                data-name="{{ $survey->project_name }}">
+                                                <p><i class="la la-hand-pointer-o"></i> Demographics</p>
+                                            </button>
+                                        @else
+                                            <span class="text-muted">N/A</span>
+                                        @endif
+                                    </th>
+                                     <td>
+                                        @php
+                                            $quotaQualificationList = ($survey->surveyQuotaQualifications ?? collect())
+                                                ->map(function ($quota) {
+                                                    $questionId = $quota->question_id ?? null;
+                                                    $answerText = trim((string) ($quota->answer_text ?? $quota->answer_code ?? ''));
+                                                    $qualificationCount = (int) ($quota->total_qualification_count ?? 0);
+                                                    $quotaCount = (int) ($quota->total_quota_count ?? 0);
+
+                                                    $parts = [];
+                                                    if ($questionId !== null && $questionId !== '') {
+                                                        $parts[] = 'Q' . $questionId;
+                                                    }
+                                                    if ($answerText !== '') {
+                                                        $parts[] = $answerText;
+                                                    }
+                                                    if ($qualificationCount > 0 || $quotaCount > 0) {
+                                                        $parts[] = '(' . $qualificationCount . '/' . $quotaCount . ')';
+                                                    }
+
+                                                    if (empty($parts)) {
+                                                        return null;
+                                                    }
+
+                                                    return e(implode(' - ', $parts));
+                                                })
+                                                ->filter()
+                                                ->implode('<br>');
+                                        @endphp
+
+                                        {!! $quotaQualificationList !== '' ? $quotaQualificationList : 'N/A' !!}
+                                    </td>
                                 </tr>
                                 @empty
                                     <tr>
-                                        <td colspan="26" class="text-center">No records found.</td>
+                                        <td colspan="27" class="text-center">No records found.</td>
                                     </tr>
                                 @endforelse
                                     {{-- pagination --}}
                                     @if ($surveys->hasPages())
                                             <tr>
-                                        <td colspan="26" class="text-left">
+                                        <td colspan="27" class="text-left">
                                             <div class="d-flex justify-content-left">
                                                 {{ $surveys->appends(request()->query())->links('pagination::bootstrap-4') }}
                                             </div>
@@ -161,16 +254,146 @@
 @endsection
 @push('scripts')
     <script>
-        $('.show-details').click(function () {
+        $(document).on('click', '.show-details', function () {
+            let targetSpec = $(this).data('target-spec') || '';
+            let $targetSpec = $('#targetSpec');
 
-            let targetSpec = $(this).data('target-spec');
+            if (!targetSpec) {
+                $targetSpec.html('<div class="text-muted">No details available.</div>');
+                return;
+            }
 
-            $('#targetSpec').html(
-                '<div class="table-responsive">' + targetSpec + '</div>'
-            );
+            const pageSize = 10;
+            const $temp = $('<div>').html(String(targetSpec));
+            const $table = $temp.find('table').first();
+
+            if ($table.length) {
+                const $rows = $table.find('tbody tr');
+                const totalRows = $rows.length;
+                const totalPages = Math.max(1, Math.ceil(totalRows / pageSize));
+                let currentPage = 1;
+
+                function renderPage() {
+                    const start = (currentPage - 1) * pageSize;
+                    const end = start + pageSize;
+                    const $pageRows = $rows.slice(start, end).clone();
+
+                    const $clone = $table.clone();
+                    $clone.find('tbody').empty().append($pageRows);
+
+                    const $pager = $(
+                        '<div class="d-flex justify-content-between align-items-center mt-3">' +
+                        '<button type="button" class="btn btn-sm btn-outline-secondary prev-page" ' + (currentPage === 1 ? 'disabled' : '') + '>Previous</button>' +
+                        '<span class="text-muted small">Page <strong>' + currentPage + '</strong> of ' + totalPages + '</span>' +
+                        '<button type="button" class="btn btn-sm btn-outline-secondary next-page" ' + (currentPage === totalPages ? 'disabled' : '') + '>Next</button>' +
+                        '</div>'
+                    );
+
+                    $targetSpec.html($clone.prop('outerHTML') + $pager.prop('outerHTML'));
+
+                    $targetSpec.find('.prev-page').off('click').on('click', function () {
+                        if (currentPage > 1) {
+                            currentPage -= 1;
+                            renderPage();
+                        }
+                    });
+
+                    $targetSpec.find('.next-page').off('click').on('click', function () {
+                        if (currentPage < totalPages) {
+                            currentPage += 1;
+                            renderPage();
+                        }
+                    });
+                }
+
+                if (totalRows === 0) {
+                    $targetSpec.html('<div class="text-muted">No details available.</div>');
+                    return;
+                }
+
+                renderPage();
+                return;
+            }
+
+            $targetSpec.html('<div class="table-responsive">' + targetSpec + '</div>');
+
 
         });
+    </script>
+    <script>
+        let demoUrl = null;
 
+        function loadDemographics(page) {
+            $('#targetSpec').html('<div class="text-muted">Loading...</div>');
+            $.get(demoUrl, { page: page })
+                .done(html => $('#targetSpec').html(html))
+                .fail(() => $('#targetSpec').html('<div class="text-danger">Unable to load demographics.</div>'));
+        }
+
+        $(document).on('click', '.demo-page:not([disabled])', function () {
+            loadDemographics($(this).data('page'));
+        });
+
+        $(document).on('click', '.show-details', function () {
+            // Demographics button: load page 1 from the server
+            if ($(this).data('demo-url')) {
+                demoUrl = $(this).data('demo-url');
+                loadDemographics(1);
+                return;
+            }
+
+            // Existing target_spec behaviour (client-side paging)
+            let targetSpec = $(this).data('target-spec') || '';
+            let $targetSpec = $('#targetSpec');
+
+            if (!targetSpec) {
+                $targetSpec.html('<div class="text-muted">No details available.</div>');
+                return;
+            }
+
+            const pageSize = 10;
+            const $temp = $('<div>').html(String(targetSpec));
+            const $table = $temp.find('table').first();
+
+            if ($table.length) {
+                const $rows = $table.find('tbody tr');
+                const totalRows = $rows.length;
+                const totalPages = Math.max(1, Math.ceil(totalRows / pageSize));
+                let currentPage = 1;
+
+                function renderPage() {
+                    const start = (currentPage - 1) * pageSize;
+                    const $pageRows = $rows.slice(start, start + pageSize).clone();
+                    const $clone = $table.clone();
+                    $clone.find('tbody').empty().append($pageRows);
+
+                    const pager =
+                        '<div class="d-flex justify-content-between align-items-center mt-3">' +
+                        '<button type="button" class="btn btn-sm btn-outline-secondary prev-page" ' + (currentPage === 1 ? 'disabled' : '') + '>Previous</button>' +
+                        '<span class="text-muted small">Page <strong>' + currentPage + '</strong> of ' + totalPages + '</span>' +
+                        '<button type="button" class="btn btn-sm btn-outline-secondary next-page" ' + (currentPage === totalPages ? 'disabled' : '') + '>Next</button>' +
+                        '</div>';
+
+                    $targetSpec.html($clone.prop('outerHTML') + pager);
+
+                    $targetSpec.find('.prev-page').off('click').on('click', function () {
+                        if (currentPage > 1) { currentPage--; renderPage(); }
+                    });
+                    $targetSpec.find('.next-page').off('click').on('click', function () {
+                        if (currentPage < totalPages) { currentPage++; renderPage(); }
+                    });
+                }
+
+                if (totalRows === 0) {
+                    $targetSpec.html('<div class="text-muted">No details available.</div>');
+                    return;
+                }
+                renderPage();
+                return;
+            }
+
+            $targetSpec.html('<div class="table-responsive">' + targetSpec + '</div>');
+        });
     </script>
 @endpush
 

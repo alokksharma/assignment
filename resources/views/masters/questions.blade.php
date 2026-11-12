@@ -61,9 +61,14 @@
 
                                         <select name="answers[{{ $question->id }}]" class="form-control">
                                             <option value="">Select</option>
-                                            @foreach($question->mapped_options as $option_key => $option)
+                                            @foreach($question->mapped_options ?? [] as $option_key => $option)
+                                                @php
+                                                    $optionLabel = is_array($option)
+                                                        ? ($option['option_text'] ?? $option['text'] ?? $option['label'] ?? $option['value'] ?? $option['option'] ?? array_values($option)[0] ?? '')
+                                                        : (string) $option;
+                                                @endphp
                                                 <option value="{{ $option_key }}">
-                                                    {{ $option }}
+                                                    {{ $optionLabel }}
                                                 </option>
                                             @endforeach
                                         </select>
@@ -72,19 +77,24 @@
                                     {{-- Checkbox --}}
                                     @case(4)
                                         <div class="row">
-                                        @foreach($question->mapped_options as $option_key => $option)
-                                        <div class="col-md-6">
-                                            <div class="form-check">
-                                                <label class="form-check-label">
-                                                <input type="checkbox"
-                                                    class="form-check-input"
-                                                    name="answers[{{ $question->id }}][]"
-                                                    value="{{ $option_key }}">
-                                                    <span class="form-check-sign"></span>
-                                                    {{ $option }}
-                                                </label>
+                                        @foreach($question->mapped_options ?? [] as $option_key => $option)
+                                            @php
+                                                $optionLabel = is_array($option)
+                                                    ? ($option['option_text'] ?? $option['text'] ?? $option['label'] ?? $option['value'] ?? $option['option'] ?? array_values($option)[0] ?? '')
+                                                    : (string) $option;
+                                            @endphp
+                                            <div class="col-md-6">
+                                                <div class="form-check">
+                                                    <label class="form-check-label">
+                                                    <input type="checkbox"
+                                                        class="form-check-input"
+                                                        name="answers[{{ $question->id }}][]"
+                                                        value="{{ $option_key }}">
+                                                        <span class="form-check-sign"></span>
+                                                        {{ $optionLabel }}
+                                                    </label>
+                                                </div>
                                             </div>
-                                        </div>
                                         @endforeach
                                         </div>
                                         @break

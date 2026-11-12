@@ -51,7 +51,7 @@
                                     <th>Speedster</th>
                                     <th>Expired At</th>
                                     <th>Modify At</th>
-                                    @canany(['edit-vendor', 'delete-vendor'])
+                                    @canany(['view-vendor', 'edit-vendor', 'delete-vendor'])
                                     <th>Action</th>
                                     @endcanany
 
@@ -76,9 +76,35 @@
                                     <td>{{ $user->vendor?->speedster }}</td>
                                     <td>{{ $user->vendor?->expired_at }}</td>
                                     <td>{{ $user->updated_at }}</td>
-                                    @canany(['edit-vendor', 'delete-vendor'])
-                                    <td>@can('edit-vendor')
-                                        <a href="{{route('vendors.edit', $user->id)}}" class="btn btn-sm btn-warning">Edit</a>
+                                    @canany(['view-vendor', 'edit-vendor', 'delete-vendor'])
+                                    <td>
+                                        @canany(['view-vendor', 'edit-vendor'])
+                                            <button
+                                                type="button"
+                                                class="btn btn-sm btn-info copy-mail-template mb-1"
+                                                data-target="mail-template-{{ $user->id }}"
+                                            >
+                                                Copy Mail Template
+                                            </button>
+
+                                            <div id="mail-template-{{ $user->id }}" class="d-none">
+                                                <x-vendor-mail-template
+                                                    :vendor-name="$user->name"
+                                                    :vendor-company-name="$user->vendor->company_name ?? $user->name"
+                                                    :vendor-id="$user->vendor?->vendor_id ?? $user->id"
+                                                    :login-email="$user->email"
+                                                    :username="$user->username ?? $user->email"
+                                                    :login-link="route('login')"
+                                                    :portal-url="url('/')"
+                                                    :support-email="config('mail.from.address', 'support@example.com')"
+                                                    :company-name="config('app.name', '3AS Research')"
+                                                    :company-website="url('/')"
+                                                />
+                                            </div>
+                                        @endcanany
+
+                                        @can('edit-vendor')
+                                            <a href="{{route('vendors.edit', $user->id)}}" class="btn btn-sm btn-warning mb-1">Edit</a>
                                         @endcan
                                         @can('delete-vendor')
                                             @if($user?->vendor && !$user->vendor->vendorProjectAssigns()->exists())
@@ -124,5 +150,67 @@
     </div>
 </div>
 @endsection
+
+@push('scripts')
+<script>
+   document.addEventListener('DOMContentLoaded', function () {
+    document.querySelectorAll('.copy-mail-template').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            const container = document.getElementById(btn.dataset.target);
+            if (!container) return;
+
+            copyRichText(container.innerHTML, container.innerText);
+        });
+    });
+
+    function copyRichText(html, text) {
+        if (navigator.clipboard && window.ClipboardItem) {
+            const item = new ClipboardItem({
+                'text/html': new Blob([html], { type: 'text/html' }),
+                'text/plain': new Blob([text], { type: 'text/plain' }),
+            });
+            navigator.clipboard.write([item])
+                .then(() => showToast('Formatted mail template copied!'))
+                .catch(() => fallbackCopy(html, text));
+        } else {
+            fallbackCopy(html, text);
+        }
+    }
+
+    function fallbackCopy(html, text) {
+        const container = document.createElement('div');
+        container.innerHTML = html;
+        container.style.position = 'fixed';
+        container.style.left = '-9999px';
+        document.body.appendChild(container);
+
+        const range = document.createRange();
+        range.selectNode(container);
+        const selection = window.getSelection();
+        selection.removeAllRanges();
+        selection.addRange(range);
+
+        try {
+            document.execCommand('copy');
+            showToast('Formatted mail template copied!');
+        } catch (err) {
+            navigator.clipboard.writeText(text);
+            showToast('Mail template copied (plain text).');
+        }
+
+        selection.removeAllRanges();
+        document.body.removeChild(container);
+    }
+
+    function showToast(message) {
+        if (typeof toastr !== 'undefined') {
+            toastr.success(message);
+        } else {
+            alert(message);
+        }
+    }
+});
+</script>
+@endpush
 
 

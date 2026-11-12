@@ -55,7 +55,7 @@ class SurveyResource extends JsonResource
                 . '&country=' . urlencode(optional($this->country)->name)
                 . '&link=live&ccode=[PanelistID]&supplier=' . $supplierId,
             // 'test_url'             => $this->test_url,
-            // 'status'               => $this->status,
+             'status'               => $this->status,
             'device_type'          => $this->device_type,
             'target_spec'          => $this->target_spec,
             'questions'          => $this->questions,

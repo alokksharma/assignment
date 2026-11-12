@@ -9,7 +9,7 @@
                     <div class="card">
                         <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
                             <h4 class="mb-0">Profile Information</h4>
-                            <a href="" class="btn btn-light btn-sm">Back to List</a>
+                            <a href="{{ route('dashboard') }}" class="btn btn-light btn-sm">Back to List</a>
                         </div>
                         <div class="card-body">
                             <section>
